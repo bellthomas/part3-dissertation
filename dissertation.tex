@@ -24,8 +24,8 @@
 
 
 %\usepackage[dvips]{epsfig,graphics} 
-\usepackage{epsfig,graphicx,verbatim,parskip,tabularx,setspace,xspace}
-% \usepackage{libertine}
+\usepackage{epsfig,graphicx,verbatim,parskip,tabularx,setspace,xspace,geometry}
+\usepackage{libertine}
 
 %% START OF DOCUMENT
 \begin{document}
@@ -34,7 +34,9 @@
 %% FRONTMATTER (TITLE PAGE, DECLARATION, ABSTRACT, ETC) 
 \pagestyle{empty}
 \singlespacing
+\newgeometry{margin=1.4in}
 \input{titlepage}
+\restoregeometry
 \onehalfspacing
 \input{declaration}
 \singlespacing
