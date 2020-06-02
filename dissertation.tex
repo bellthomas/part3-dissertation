@@ -8,9 +8,10 @@
 %%
 %%   SMH, May 2010. 
 
+\newcommand{\wordcount}{\input{|"./wordCount.sh"}}
 
 \documentclass[a4paper,12pt,twoside,openright]{report}
-
+%TC:ignore
 
 %%
 %% EDIT THE BELOW TO CUSTOMIZE
@@ -20,7 +21,7 @@
 \def\authorcollege{Jesus College\xspace}
 \def\authoremail{Alexander.Bell-Thomas@cl.cam.ac.uk}
 \def\dissertationtitle{Trusted Reference Monitors for Linux using Intel SGX Enclaves}
-\def\wordcount{14,235}
+\def\wordcount{0}
 
 
 %\usepackage[dvips]{epsfig,graphics} 
@@ -51,6 +52,7 @@
 
 \onehalfspacing
 
+%TC:endignore
 %% START OF MAIN TEXT 
 
 \chapter{Introduction}
@@ -73,6 +75,7 @@
 \chapter{Summary and Conclusions} 
 \input{chapters/conclusion}
 
+%TC:ignore
 
 \appendix
 \singlespacing
@@ -80,4 +83,5 @@
 \bibliographystyle{unsrt} 
 \bibliography{references} 
 
+%TC:endignore
 \end{document}

@@ -1,1 +1,33 @@
-\paragraph{} This is my introduction
+
+
+
+\paragraph{} The task of defending computer systems against malicious programs and affording isolation to protected system components has always been exceedingly challenging to achieve. This becomes ever more complicated as the the underlying codebase for these systems grow, leaving space for sophisticated vulnerabilities. 
+
+\paragraph{} A system's \textit{Trusted Computing Base}, or \textit{TCB}, defines the minimal set of software, fimrware, and hardware components critical to establish and maintain system security and integrity. This traditionally includes, amogst others; the OS kernel; device drivers; device firmware; and the hardware itself. Compromise of a trusted component inside a system's \textit{TCB} is a direct threat to any secure application running on it. A common approach to hardening a system's security is to minimise its \textit{TCB}, diminishing its potential \textit{attack surface}. 
+
+\paragraph{} A modern trend is to outsource the physical layer of a system to a foreign party, for example a \textit{cloud provider} --- this is beneficial both in terms of cost and flexibility, but confuses many security considerations which assume that the physical layer itself can be trusted. In this context there is no guarantee of this, as the physical layer is in fact provided as a \textit{virtual machine}, inflating the system's \textit{TCB} with an external and transparent software layer, the underlying \textit{hypervisor}.
+
+\paragraph{} The concept of \textit{Trusted Execution Environments}, \textit{TEEs}, has been explored by the security community for a very long time as a potential protection against this, providing isolated processing contexts in which an operation can be securely executed irrespective of the rest of the system --- one such example is software \textit{enclaves}. \textit{Enclaves} are general-purpose \textit{TEEs} provided by a CPU itself, protecting the logic found inside at the architectural level. Intel's Software Guard Extensions (SGX) are the most prolific example, affording a \textit{black-box} environment and runtime for arbitrary apps to execute under. Introduced by Intel's \textit{Skylake} architecture, a partial view of the platform's working can be found in whitepapers and previous publications.
+
+\paragraph{} SGX provides a \textit{TEE} by enforcing the following:
+
+\begin{enumerate}
+    \item Isolating a protected application, coined an enclave, from all other processes on the system at any priviledge level using hardware enforcement.
+    \item Protecting reserved memory against attacks using a dedicated hardware component, the \textit{Memory Encryption Engine} (\textit{MEE}). 
+\end{enumerate}
+
+\paragraph{} ... bit more here
+
+\paragraph{} A common usage pattern for enclaves in modern production systems is to build on top of a \textit{libOS}.\footnote{Library Operating System} This approach sees a trusted application built to depend on a modified operating system which is loaded alongside it in the enclave. Examples include \textit{SGX-LKL}, \textit{Graphene}, and \textit{Occlum}. These projects allow SGX-unaware applications to be inexpensively ported into enclaves, but drastically inflate the \textit{TCB} of the resulting program.
+
+\paragraph{} The aim of this work is to explore methods of hardening Linux with an SGX-driven \textit{reference monitor} to track and protect system resources using \textit{information flow control} methods. Further, it aims to investigate whether bundling an entire operating environment into an enclave is necessary, instead asking if simply using the host operating system could suffice for some tasks.
+
+
+\paragraph{Our Contribution}
+
+\paragraph{} This work provides:
+\begin{itemize}
+    \item A prototype implementation of an enclave-based, modular \textit{reference monitor}, empowering \textit{information flow control} techniques to operate with autonomy and protection from the host operating system. Enforcement is achieved using a modified Linux kernel, with an overall \textit{TCB} including a minimal footprint of the core kernel alongside the core enclave.
+    \item A userspace interposition library to near-transparently integrate unmodified applications to fully function under the new restrictions.
+    \item A rigorous investigation of the performance implications of this approach, featuring a lightly-modified version of an \textit{Nginx} production webserver. Worst-case performance shows a 35\% decrease in throughput, with the common case reporting 7-11\%. Additionally we report a median overhead of 43$\mu s$ (IQR 26-72$\mu s$) per affected \textit{system call}, matching or surpassing similar, non enclave-based, systems.
+\end{itemize}

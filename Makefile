@@ -23,3 +23,5 @@ clean:
 	$(RM) -f dissertation.pdf dissertation.ps dissertation.dvi 
 	$(RM) -f *.log *.aux *.toc *.bbl *.lot *.lof *.fls *.fdb_latexmk *.synctex.gz
 
+count:
+	@texcount -1 -utf8 -sum -inc dissertation.tex
