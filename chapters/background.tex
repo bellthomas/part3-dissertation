@@ -12,11 +12,11 @@
 \begin{figure}[]
     \centering
     \includegraphics[width=0.9\linewidth]{figures/SGX-architecture.pdf}
-    \caption{Abstract overview of an SGX enclave's protections.}
+    \caption{Abstract overview of an SGX enclave's protections}
     \label{fig:sgx-basic}
 \end{figure}
 
-\paragraph{} At its heart SGX is designed to be \textit{trustworthy}; this is achieved in a number of ways, including robust enclaving provisioning, sealing and attestation. Intel enumerates SGX's protection as follows;
+\paragraph{} At its heart SGX is designed to be \textit{trustworthy}; this is achieved in a number of ways, including robust enclaving provisioning, sealing and attestation. Intel enumerates SGX's protections as follows;
 
 \begin{itemize}
     \item Memory security against observation and modification from outside the enclave; this is achieved using an in-die \textit{Memory Encryption Engine} (\textit{MEE}), with a secret that rotates on every boot. This protection notably works against a host hypervisor, other enclaves, and anything running in supervisor mode.
@@ -27,6 +27,20 @@
 \end{itemize}
 
 \subsection{Architecture and Implementation}
+
+\begin{figure}[]
+    \centering
+    \includegraphics[width=0.9\linewidth]{figures/SGX-AdvArchitecture.pdf}
+    \caption{A high-level overview of the SGX hardware and software architecture.}
+    \label{fig:sgx-advarch}
+\end{figure}
+
+\paragraph{} The SGX platform comprises a number of interlocking parts, as shown in Figure~\ref{fig:sgx-advarch}. Working from the hardware up, at the heart of the platform is the extended x86 instruction set and memory protection provided by an SGX-capable CPU. 
+
+\paragraph{Hardware} Enclaves' data and code is stored securely in \textit{Processor Reserved Memory}, \textit{PRM}; this is a set of pages in system memory that are presided over by the \textit{MEE}. DMA\footnote{Direct Memory Access} to \textit{PRM} is always rejected. \textit{PRM} consists of two datastructures; the \textit{Enclave Page Cache Map} (\textit{EPCM}) and the \textit{Enclave Page Cache} (\textit{EPC}). An individual enclave is defined by an \textit{SGX Enclave Control Structure}, \textit{SECS}; this is generated when an enclave is created and stored in a dedicated entry in the \textit{EPC}. An enclave's \textit{SECS} contains important information such as its (system) global identifier, its measurement hash and the amount of memory it is using. Access control information is stored in the \textit{EPCM} alongside page validity flags, the owning enclave identifier and the page's type; this is not accessible from software. An attempt to resolve a page in \textit{PRM} is successful only if the CPU is executing in enclave mode and its \textit{EPCM} entry states it belongs the currently executing enclave --- if this is not the case the lookup returns an unused page from generci system memory.
+
+\paragraph{} The host OS or hypervisor manages the \textit{EPC} just as it does with normal system memory, swapping pages in and out according to its own policy, but must do so using SGX specific instructions. The \textit{MEE} is responsible for ensuring the integirty and confidentiality of this process, encrypting and decrypting pages as they cross the \textit{PRM} boundary. Data is verified with the use of an integrity tree, and encryption keys are generated at boot-time. Importantly the SGX archicture relies on the host OS to be SGX-aware, empowering userspace applications to function without the priviliedge; this is provided by the SGX driver, \textit{isgx}.
+
 \paragraph{} Kernel module, driver. SDK.
 
 \subsection{Enclave Lifecycle}
