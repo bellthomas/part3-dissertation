@@ -56,7 +56,7 @@
 
 \paragraph{} SGX instructions can be separated into two distinct groups; privileged and unprivileged. These, alongside a description of the function they perform, are enumerated in Table~\ref{table:sgx-instructions}.\footnote{A handful of instructions not relevant to the explanation given here are omitted.} The following description of the process of creating an enclave is illustrated in Figure~\ref{fig:sgx-enclavecreate}.
 
-\paragraph{Preparing an enclave} Execution begins with the host application; is needs to initiate the creation process, but must do so via a component with \textit{Ring 0} privilege. This facilities is provided by \textit{isgx}, the SGX driver. The application first requests \textit{isgx} allocates the necessary number of pages to run the enclave $\langle 1 \rangle$;\footnote{These numbers correspond to events in Figure~\ref{fig:sgx-enclavecreate}.} this is tracked and served from the driver's internal state $\langle 2 \rangle$.
+\paragraph{Preparing an enclave} Execution begins with the host application; is needs to initiate the creation process, but must do so via a component with \textit{Ring 0} privilege. This facility is provided by \textit{isgx}, the SGX driver. The application first requests \textit{isgx} to allocate the necessary number of pages to run the enclave $\langle 1 \rangle$;\footnote{These numbers correspond to events in Figure~\ref{fig:sgx-enclavecreate}.} this is tracked and served from the driver's internal state $\langle 2 \rangle$.
 
 \paragraph{} The application continues by executing \texttt{ECREATE} with the metadata of the enclave to be loaded $\langle 3 \rangle$; the \textit{MEE} checks that the pages being claimed are in fact vacant and populates the \textit{SECS} page with the necessary information $\langle 4 \rangle$. Once this is complete the application prepares the remaining \textit{EPC} pages using \texttt{EADD} $\langle 5 \rangle$ and loads the enclave's code and data $\langle 6 \rangle$.
 
@@ -66,13 +66,13 @@
 \begin{figure}[]
     \centering
     \includegraphics[width=\linewidth]{figures/SGX-EnclaveCreate.pdf}
-    \caption{The process of creating and initialising an enclave; details given in §~\ref{sec:sgx-lifecycle}. Purple components are a part of the SGX platform. Diagram inspired by Adamski~[X]}
+    \caption{The process of creating and initialising an enclave; details given in §~\ref{sec:sgx-lifecycle}. Purple components belong to the SGX platform.}
     \label{fig:sgx-enclavecreate}
 \end{figure}
 
-\paragraph{Stepping into the enclave} Once an enclave is created is can be invoked using the \texttt{EENTER} instruction. This can only jump to code explicitly defined in the enclave's interface definition and switches the CPU core to enclave mode. SGX uses a flag in the CPU core's \textit{Thread Control Block} to prevent any other logic core following the current one into the enclave.
+\paragraph{Stepping into the enclave} Once an enclave is created is can be invoked using the \texttt{EENTER} instruction. This can only jump to code explicitly defined in the enclave's interface definition and switches the CPU core to enclave mode. SGX uses a flag in the CPU core's \textit{Thread Control Block} to prevent any other logical core following the current one into the enclave.
 
-\paragraph{} Interrupts and exception can be served to the enclave, just as with any other application. When in enclave mode control is not immediately passed over to the defined handler, but instead the enclave's current state is saved and cleared to ensure no data is leaked. The \textit{Asynchronous Enclave Exit} routine is invoked and enclave mode disabled. Execution post-interruption is restarted with the \texttt{ERESUME} instruction. Once an enclave has finished executing the registers are erased and \texttt{EEXIT} called. Enclaves are terminated using the \texttt{EREMOVE} command; all \textit{EPC} are marked as invalid and the \textit{SECS} page deleted.
+\paragraph{} Interrupts and exceptions can be served to the enclave, just as with any other application. When in enclave mode control is not immediately passed over to the defined handler, but instead the enclave's current state is saved and cleared to ensure no data is leaked. The \textit{Asynchronous Enclave Exit} routine is then invoked and enclave mode disabled. Execution post-interruption is restarted with the \texttt{ERESUME} instruction. Once an enclave has finished executing the registers are erased and \texttt{EEXIT} called. Enclaves are terminated using the \texttt{EREMOVE} command; all claimed \textit{EPC} pages are marked as invalid and the \textit{SECS} page deleted.
 
 \paragraph{} \label{sec:sgx-no-kernel-mode} A significant design decision made in the SGX architecture is that enclaves cannot be entered by a process operating in \textit{Ring 0}; the required instructions simply aren't available. This forces all host applications to run in userspace, making interoperation with the kernel challenging, as will be discussed in §~\ref{sec:design}.
 
@@ -94,7 +94,7 @@
         \hline\hline
         \multirow{11}{*}{Ring 3} 
         & \tableTop{\texttt{EENTER}} & \tableTop{Transfer control from the host application to a pre-determined location in an enclave.} \\ 
-        & \texttt{ERESUME} & \tableMid{Re-enter the enclave after an \textit{OCALL} and resume execution.} \\ 
+        & \texttt{ERESUME} & \tableMid{Re-enter the enclave after an interrupt/exception and resume execution.} \\ 
         & \texttt{EEXIT} & \tableMid{Restore the original operating mode at the location \texttt{EENTER} was triggered and flush the TLB.} \\ 
         & \texttt{EGETKEY} & \tableMid{Access platform cryptography keys required for attestation and sealing.} \\ 
         & \texttt{EREPORT} & \tableMid{Generate a \textit{report} for an enclave's \textit{attestation key} for an attestation process.} \tableBottom \\ 
@@ -108,6 +108,16 @@
 
 \subsection{Attestation}
 \label{sec:attestation}
+
+\paragraph{} An essential feature of the \textit{trusted computing} model SGX creates is attestation, the process of verifying both the authenticity and integrity of component cryptographically. SGX achieves by creating two hashed values, or \textit{signing identifies}, per enclave; \texttt{MRENCLAVE} and \texttt{MRSIGNER}.
+
+\paragraph{} \texttt{MRENCLAVE} acts an a unique identifier for the contents of an enclave. It is generated by hashing the instructions and data passed when creating the enclave with \texttt{ECREATE}, \texttt{EADD}, and \texttt{EEXTEND}; the value is finalised and stored in the \textit{SECS} on \texttt{EINIT}. This values depends on the exact content and ordering of the enclave's \textit{EPC} pages. As long as the enclave's source remains the same, so will its \texttt{MRENCLAVE}.
+
+\paragraph{} \texttt{MRSIGNER}, also known as the enclave's \textit{Sealing Identity}, is generated during the enclave build process --- all production enclaves need to be signed using an RSA key provided by the compiling user (the \textit{Sealing Authority}). The public key from this pair is stored in \textit{SIGSTRUCT}, the \textit{Enclave Signature Structure}. During an enclave's launch its \textit{SIGSTRUCT}, which holds the signed compile-time \texttt{MRENCLAVE} value, is decrypted and crossreferenced with a freshly-computed runtime \texttt{MRENCLAVE} value to detect tampering. \texttt{MRSIGNER} is the same for all enclaves signed by the same \textit{Sealing Authority}.
+
+\paragraph{Local Attestation} Two enclaves reisdent on the same system are able to attest their identities to each other using their \texttt{MRENCLAVE} and \texttt{MRSIGNER} values; this usually precedes the establishment of a shared secret (using a variant of \textit{Diffie-Hellman} backed by the platform's master SGX key)\footnote{Note for Harri: must check these details.} for confidential communication between them.
+
+\paragraph{Remote Attestation} In addition to attestation between entities on the same platform, the Intel specifiation also provides a workflow for an enclave to attest its identity to a remote party. The system's \textit{Quoting Enclave} verifies an enclave's local \textit{quote} and creates a digital signature of it using the CPU's permanent hardware SGX private key. Through the use of an \textit{Intel Enchanced Privacy Identifier} (\textit{EPID}) this process can be carried out anonymously; it relies on information encoded in the CPU during the manufacturing process. The \textit{Provisioning Enclave} assists in this process, especially as production enclaves are required to attest with Inthel's provisioning service before executing. Remote attestation is not explicitly required in this project's architecture hence will not be covered in any further detail.
 
 \subsection{Provisioning and Sealing}
 \label{sec:provisioning}
