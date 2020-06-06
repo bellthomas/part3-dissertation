@@ -40,29 +40,7 @@
 
 
 \subsection{Modelling}
-
-\paragraph{} In centralised IFC schemes the reference monitor is the only entity capable of creating, changing, and assigning tags. DIFC modifies this, giving \textit{all} processes the ability to create and modify tags for the entity they hold ownership over; thus they alone can declassify or endorse them.
-
-\paragraph{Notation} As the model we build in §~\ref{sec:design} is closest in spirit to \textit{CamFlow}, we, for clarity in comparison, use the same notation (as summarised in Table~\ref{table:ifc-notation}).
-
-\begin{equation}
-    A \rightarrow B \iff A_s \preceq B_s \;\; \land \;\; B_i \preceq A_i \tag{$\alpha$}
-  \end{equation}
-
-\begin{equation}
-    A \Rightarrow B \implies A_s = B_s \;\; \land \;\; B_i = A_i \tag{$\beta$}
-\end{equation}
-
-\begin{equation}
-    \left\{\begin{array}{lr}
-        A_x \rightarrow A_x \cup \{t\} & \text{if} \;\; t \in A_{x}^{+} \\
-        A_x \rightarrow A_x \smallsetminus \{t\} & \text{if} \;\; t \in A_{x}^{-} \\
-    \end{array}\right\} \implies A \rightsquigarrow A' \tag{$\gamma$}
-\end{equation}
-
-\begin{equation}
-    A \xhookrightarrow[]{t^{\pm}_{x}} B \;\; \text{only if} \;\; t \in A_{x}^{\pm} \tag{$\beta$}
-\end{equation}
+\label{sec:ifc-modelling}
 
 \begin{table}
     \centering
@@ -75,16 +53,50 @@
         \hline
             \tableTop{$A \rightarrow B$} & \tableTop{Rule $\alpha$; a permissible information flow between entity $A$ and entity $B$.} \\
             
-            $A \Rightarrow B$ & \tableMid{Rule $\beta$; ....} \\
+            $A \Rightarrow B$ & \tableMid{Rule $\beta$; a creation flow, initialising $B$ from $A$ as its parent.} \\
 
-            $A \rightsquigarrow A'$ & \tableMid{Rule $\gamma$; ....} \\
+            $A \rightsquigarrow A'$ & \tableMid{Rule $\gamma$; a context change, with $A$ modifying its security context in accordance with its capabilities.} \\
             
-            $A \xhookrightarrow[]{t^{\pm}_{x}} B$ & \tableMid{Rule $\delta$; ....} \tableBottom \\
+            $A \xhookrightarrow[]{t^{\pm}_{x}} B$ & \tableMid{Rule $\delta$; priviledge delegation, with $A$ passing a capability $t$ to $B$.} \tableBottom \\
     \end{tabular}
-    \vspace{5mm}
-    \caption{Overview of notable SGX x86 instructions in an enclave's lifecycle.}
+    % \vspace{5mm}
+    \caption{Overview of the four core IFC events used in §~\ref{sec:ifc-modelling}.}
     \label{table:ifc-notation}
 \end{table}
+
+
+\paragraph{} In centralised IFC schemes the reference monitor is the only entity capable of creating, changing, and assigning tags. DIFC modifies this, giving \textit{all} processes the ability to create and modify tags for the entity they hold ownership over; thus they alone can declassify or endorse them.
+
+\paragraph{Notation} As the model we build in §~\ref{sec:design} is closest in spirit to \textit{CamFlow}, we, for clarity in comparison, use the same notation (as summarised in Table~\ref{table:ifc-notation}).
+
+\paragraph{Enforcing Safe Flows} ($\alpha$), below, describes the conditions in which a flow can be considered \textit{safe}, abiding by the system's IFC policy. Verbally, the recipient must be \textit{at least as privileged} as the originator and cannot accept information graded below its own integrity status. Here $\preceq$ denote any applicable preorder relation; inclusion ($\subseteq$) will suffice in this context. If is a flow is \textit{impermissible} it is shown as $A \nrightarrow B$.
+\begin{equation}
+    A \rightarrow B \iff A_s \preceq B_s \;\; \land \;\; B_i \preceq A_i \tag{$\alpha$}
+\end{equation}
+\paragraph{} Information produced within a \textit{security context} may only flow within the same, or a sub-\textit{context}. Integrity functions in the same way but in the inverse; data can only flow with the same, or lower, integrity grading.
+
+\paragraph{Entity Creation} ($\beta$) depicts the rule for correctly initialising a new object's \textit{security context}. Logically, it must be held at the same level at the environment creating it. A illustrative example is a process creating a new file; although permitted the result is subject to the same tainting as the original process.
+\begin{equation}
+    A \Rightarrow B \implies A_s = B_s \;\; \land \;\; A_i = B_i \tag{$\beta$}
+\end{equation}
+
+\paragraph{Vocational Label Management} The core mantra of the \textit{decentralised} aspect of \textit{DIFC} is that processes are themselves responsible for policies governing the assets they own. To this end, a process's labelling must be dynamic. More generally, entities can be sorted into two distinct categories;
+
+\begin{itemize}
+    \item \textit{Active} (processes), with \textit{mutable} security contexts.
+    \item \textit{Passive} (files, pipes, sockets, etc.), which merely act as data vessels for \textit{active} entities.
+\end{itemize}
+\begin{equation}
+    \left\{\begin{array}{lr}
+        A_x \rightarrow A_x \cup \{t\} & \text{if} \;\; t \in A_{x}^{+} \\
+        A_x \rightarrow A_x \smallsetminus \{t\} & \text{if} \;\; t \in A_{x}^{-} \\
+    \end{array}\right\} \implies A \rightsquigarrow A' \tag{$\gamma$}
+\end{equation}
+
+\begin{equation}
+    A \xhookrightarrow[]{t^{\pm}_{x}} B \;\; \text{only if} \;\; t \in A_{x}^{\pm} \tag{$\delta$}
+\end{equation}
+
 
 
 
