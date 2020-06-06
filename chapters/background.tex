@@ -6,7 +6,7 @@
 
 \section{Information Flow Control}
 
-\paragraph{} IFC regulates how and where data is permitted to move and be transformed in a computer system. This differs from access control, which defines what resources may be used by an entity --- IFC allows granular control over how they may be used once accessed, including restriction propagation between components. 
+\paragraph{} IFC regulates how and where data is permitted to move and be transformed in a computer system. This differs from access control, which defines what resources may be used by an entity --- IFC allows granular control over how they may be used once accessed, including restricting propagation between components. 
 
 \paragraph{} Formally, IFC defines and enforces a non-interference policy between abstract \textit{security contexts}. A simple, atomic example is the distinction between \textit{unclassified} and \textit{classified} data --- here, information is only allowed to flow \textit{up}, ensuring that an \textit{unclassified} entity does not learn anything marked as \textit{classified}. In general this form of relationship can be represented as a partial ordering over \textit{security contexts}, enumerated in the form of a lattice.
 
@@ -16,12 +16,12 @@
 
 \subsection{Motivation, History, and \textit{Decentralised IFC}}
 
-\paragraph{} IFC has, in recent years, been incresing in support as a powerful methodology for ensuring granularly privacy whilst simultaneously not unduly restricting access to access to sensitive information. IFC annotates data records with opaque \textit{labels}, referring to either their confidentiality or integrity status. Rather than simply restricting access to sensitive data, as would be the action taken by an access control mechanism, IFC opts to track data as it propagates --- if an entity attempts to move this into an unknown, untrusted, or conflicting \textit{security context} the IFC system prevents this to ensure data is not improperly released.
+\paragraph{} IFC has, in recent years, been incresing in support as a powerful methodology for ensuring granularly privacy whilst simultaneously not unduly restricting access to sensitive information. IFC annotates data records with opaque \textit{labels} that refer to either their confidentiality or integrity status. Rather than simply restricting access to sensitive data, as would be the action taken by an access control mechanism, IFC opts to track data as it propagates --- if an entity attempts to move this into an unknown, untrusted, or conflicting \textit{security context} the IFC system prevents this to ensure data is not improperly released.
 
-\paragraph{} IFC originated from research conducted in the mid-1970's~[X,Y] but has not, as of yet, seen mainstream adoption. A major reason for this is that early schemes were designed around the \textit{multi-level security} (\textit{MLS}) doctrine set out in the \textit{Orange Book}:~[Z] this locked IFC to a shallow set of broad labels, mirroring existing institutional segregation (such as \textit{restricted}, \textit{secret}, \textit{top secret}). Policies were managed centrally, something easily applicable in settings with rigorous hierarchies such as the military, but unwieldy in organisation with diverse security procedures.
+\paragraph{} IFC originated from research conducted in the mid-1970s~[X,Y] but has not, as of yet, seen mainstream adoption. A major reason for this is that early schemes were designed around the \textit{multi-level security} (\textit{MLS}) doctrine set out in the \textit{Orange Book}:~[Z] this locked IFC to a shallow set of broad labels, mirroring existing institutional segregation (such as \textit{restricted}, \textit{secret}, \textit{top secret}). Policies were managed centrally, something easily applicable in settings with rigorous hierarchies such as the military, but unwieldy in organisation with manifold security protocols.
 
 \paragraph{} The majority of recent research in this areas has advocated \textit{decentralised information flow control} 
-(\textit{DIFC}), introduced by Myers and Liskov.~[X] DIFC is more granular that schemes adhering to the \textit{MLS} model; for example, creating two distinct \textit{security contexts} for two files in the same folder. Policies are discretionary, allowing users to specify and modify the enforced policy for files they own.
+(\textit{DIFC}), introduced by Myers and Liskov.~[X] DIFC is more granular that schemes adhering to the \textit{MLS} model; for example, creating two distinct \textit{security contexts} for two files in the same folder. Policies are discretionary, allowing users to specify and modify the enforced policies for assets they own.
 
 \subsection{Security Labels and the Reference Monitor}
 
@@ -36,7 +36,7 @@
     \item $t \in a_s$ restricts $a$'s access to an uncontrolled medium, such as a network.
 \end{enumerate}
 
-\paragraph{} The heart an IFC implementation is its \textit{Reference Monitor}. This process tracks the the labelling for each process, granting or rejecting permission to execute an operation before it is served to the operating system. Different solutions handles this process differently: \textit{Flume}, [X] for example, implements a full system interposition layer, forcing all \textit{syscalls} to pass through its userspace \textit{reference monitor} before reaching the OS, whereas \textit{CamFlow} [Y] embeds its \textit{reference monitor} in the kernel itself. In all schemes, however, this trusted component is responsible for the policy and its enforcement on the system. The implementation of this shall be the focus of the project.
+\paragraph{} The heart of an IFC implementation is its \textit{Reference Monitor}. This process tracks the the labelling for each process, granting or rejecting permission to execute an operation before it is served to the operating system. Different solutions handles this process differently: \textit{Flume}, [X] for example, implements a full system interposition layer, forcing all \textit{syscalls} to pass through its userspace \textit{reference monitor} before reaching the OS, whereas \textit{CamFlow} [Y] embeds its \textit{reference monitor} in the kernel itself. In all schemes, however, this trusted component is responsible for the policy and its enforcement on the system. The implementation of this shall be the focus of this project.
 
 
 \subsection{Modelling}
@@ -69,23 +69,25 @@
 
 \paragraph{Notation} As the model we build in §~\ref{sec:design} is closest in spirit to \textit{CamFlow}, we, for clarity in comparison, use the same notation (as summarised in Table~\ref{table:ifc-notation}).
 
-\paragraph{Enforcing Safe Flows} ($\alpha$), below, describes the conditions in which a flow can be considered \textit{safe}, abiding by the system's IFC policy. Verbally, the recipient must be \textit{at least as privileged} as the originator and cannot accept information graded below its own integrity status. Here $\preceq$ denote any applicable preorder relation; inclusion ($\subseteq$) will suffice in this context. If is a flow is \textit{impermissible} it is shown as $A \nrightarrow B$.
+\paragraph{Enforcing Safe Flows} ($\alpha$), below, describes the conditions in which a flow can be considered \textit{safe}, abiding by the system's IFC policy. Verbally, the recipient must be \textit{at least as privileged} as the originator and cannot accept information graded below its own integrity status. Here $\preceq$ denote any applicable preorder relation; inclusion ($\subseteq$) will suffice in this context. If a flow is \textit{impermissible} it is denoted as $A \nrightarrow B$.
 \begin{equation}
     A \rightarrow B \iff A_s \preceq B_s \;\; \land \;\; B_i \preceq A_i \tag{$\alpha$}
 \end{equation}
-\paragraph{} Information produced within a \textit{security context} may only flow within the same, or a sub-\textit{context}. Integrity functions in the same way but in the inverse; data can only flow with the same, or lower, integrity grading.
+\paragraph{} Information produced within a \textit{security context} may only flow within the same context or a related \textit{subcontext}. Integrity functions in the same way but in the inverse; data can only flow in contexts with the same, or lower, integrity grading.
 
 \paragraph{Entity Creation} ($\beta$) depicts the rule for correctly initialising a new object's \textit{security context}. Logically, it must be held at the same level at the environment creating it. A illustrative example is a process creating a new file; although permitted the result is subject to the same tainting as the original process.
 \begin{equation}
     A \Rightarrow B \implies A_s = B_s \;\; \land \;\; A_i = B_i \tag{$\beta$}
 \end{equation}
 
-\paragraph{Vocational Label Management} The core mantra of the \textit{decentralised} aspect of \textit{DIFC} is that processes are themselves responsible for policies governing the assets they own. To this end, a process's labelling must be dynamic. More generally, entities can be sorted into two distinct categories;
+\paragraph{Vocational Label Management} The core mantra of the \textit{decentralised} aspect of \textit{DIFC} is that processes are themselves responsible for policies governing the assets they own. To this end, a process's labelling must be dynamic. Generally, entities can be sorted into two distinct categories;
 
 \begin{itemize}
     \item \textit{Active} (processes), with \textit{mutable} security contexts.
     \item \textit{Passive} (files, pipes, sockets, etc.), which merely act as data vessels for \textit{active} entities.
 \end{itemize}
+
+\paragraph{} \textit{Active} entities have the right to modify their labelling iff they have the capability to make that modification. These capabilities come in two forms; one for addition and one for removal of tags. The set $A_{s}^{+} \subseteq \mathcal{T}$ enumerates all the tags that entity $A$ has the ability to add to its security labelling. Likewise, $A_{s}^{-} \subseteq \mathcal{T}$ holds all of the tags $A$ has the ability to remove from its labelling. These sets are modified either in the process of creating an entity or in receipt of a delegated capability from a peer. The sets $A_{i}^{\pm} \subseteq \mathcal{T}$ also exist, performing the same function for integrity labels. ($\gamma$) describes this process formally.
 \begin{equation}
     \left\{\begin{array}{lr}
         A_x \rightarrow A_x \cup \{t\} & \text{if} \;\; t \in A_{x}^{+} \\
@@ -93,12 +95,20 @@
     \end{array}\right\} \implies A \rightsquigarrow A' \tag{$\gamma$}
 \end{equation}
 
+\paragraph{} A notable restriction is that a process has to be aware of the IFC constraints imposed on it and how to interact with the system to perform this operation. Most processes should not require this, but is an important consideration when applying DIFC to an entire system.
+
+\paragraph{Capability Lifecycle and Delegation} As defined by ($\beta$), an entity automatically inherits the labelling of its creator: this process, however, does not pass on any capabilities ($A_{s}^{\pm}, A_{i}^{\pm} = \varnothing$). This raises the need for \textit{capability delegation}.
+
+\paragraph{} A capability held by $A$, $t_{x}^{\pm}$, where $t \in A_{x}^{\pm}$, is permitted to be transferred to $B$ in order for it to act on its behalf. This is denoted as follows in ($\delta$).
+
+
 \begin{equation}
     A \xhookrightarrow[]{t^{\pm}_{x}} B \;\; \text{only if} \;\; t \in A_{x}^{\pm} \tag{$\delta$}
 \end{equation}
 
+\paragraph{} This process is vital in, as an example, a web server: to transmit another entity's information over an untrusted socket, the server must have permission to \textit{declassify} it --- i.e. it must hold $f_{s}^{-}$, where $f$ is the secrecy label of the information to transmit.\footnote{The server process, $W$, must have $W_{i} = \varnothing$ as it holds a connection to an untrusted socket. Thus the integrity clause in ($\alpha$) will not interfere.}
 
-
+\paragraph{Conflict of Interest} The \textit{CamFlow} model additionally specifies a formalisation to avoid violating mutually exclusive tag-pairs being held simultaneously. This will be discussed in further detail in §~0.0,\footnote{TODO link} but is not essential to add to our understanding at this point.
 
 
 
