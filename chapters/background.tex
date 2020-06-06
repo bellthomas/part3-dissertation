@@ -1,11 +1,41 @@
 
-\paragraph{} This chapter will cover a number of topics essential to understanding the rationale and implementation of the design as discussed in §~\ref{sec:design}. These include; Intel SGX, a brief overview of modern \textit{libOSes}, an introduction to \textit{Information Flow Control} (\textit{IFC}), and a overview of key aspects of the Linux kernel relevant to the architecture of the prototype.
+\paragraph{} This chapter will cover a number of topics essential to understanding the rationale and implementation of the design as discussed in §~\ref{sec:design}. These include; an introduction to \textit{Information Flow Control} (\textit{IFC}), the Intel SGX platform, and a overview of key aspects of the Linux kernel relevant to the architecture of the prototype.
+
+
+% -------------
+
+\section{Information Flow Control}
+
+\paragraph{} IFC regulates how and where data is permitted to move and be transformed in a computer system. This differs from access control, which defines what resources may be used by an entity --- IFC allows granular control over how they may be used once accessed, including restriction propagation between components. 
+
+\paragraph{} Formally, IFC defines and enforces a non-interference policy between abstract \textit{security contexts}. A simple, atomic example is the distinction between \textit{unclassified} and \textit{classified} data --- here, information is only allowed to flow \textit{up}, ensuring that an \textit{unclassified} entity does not learn anything marked as \textit{classified}. In general this form of relationship can be represented as a partial ordering over \textit{security contexts}, enumerated in the form of a lattice.
+
+\paragraph{} Practical systems often require, however, dataflow adhering to a more complicated policy set --- for example, supporting \textit{declassification}. Work undertaken by Pasquier et al., [X] which will be the core influence of the IFC model developed in this project, constructs a pliable and efficient \textit{decentralised information flow control} (\textit{DIFC}) model suitable for provenance enforcement and auditing in the Linux kernel.
+
+\paragraph{} The notation and concepts adopted are primarily derived from Pasquier~[X] and Krohn~[Y]; any additional works will be individually cited but may use differing terminology.
+
+\subsection{Motivation, History, and \textit{Decentralised IFC}}
+
+\paragraph{} IFC has, in recent years, been incresing in support as a powerful methodology for ensuring granularly privacy whilst simultaneously not unduly restricting access to access to sensitive information. IFC annotates data records with opaque \textit{labels}, referring to either their confidentiality or integrity status. Rather than simply restricting access to sensitive data, as would be the action taken by an access control mechanism, IFC opts to track data as it propagates --- if an entity attempts to move this into an unknown, untrusted, or conflicting \textit{security context} the IFC system prevents this to ensure data is not improperly released.
+
+\paragraph{} IFC originated from research conducted in the mid-1970's~[X,Y] but has not, as of yet, seen mainstream adoption. A major reason for this is that early schemes were designed around the \textit{multi-level security} (\textit{MLS}) doctrine set out in the \textit{Orange Book}:~[Z] this locked IFC to a shallow set of broad labels, mirroring existing institutional segregation (such as \textit{restricted}, \textit{secret}, \textit{top secret}). Policies were managed centrally, something easily applicable in settings with rigorous hierarchies such as the military, but unwieldy in organisation with diverse security procedures.
+
+\paragraph{} The majority of recent research in this areas has advocated \textit{decentralised information flow control} 
+(\textit{DIFC}), introduced by Myers and Liskov.~[X] DIFC is more granular that schemes adhering to the \textit{MLS} model; for example, creating two distinct \textit{security contexts} for two files in the same folder. Policies are discretionary, allowing users to specify and modify the enforced policy for files they own.
+
+\subsection{Security Labels and Tags}
+
+\paragraph{} 
+
+\subsection{Modelling}
+
+% ---------
 
 \section{Intel SGX}
 
 \paragraph{} Intel's Software Guard Extensions, SGX, was first announced and detailed in a handful of whitepaper documents published in 2013. [X,Y,Z] It described a novel approach, creating in-CPU containers with their own protected memory pools. These regions, called \textit{enclaves}, cannot be read from or written to by an unauthorised party due to fundamental protection mechanisms provided by the x86 architecture, even if running in \textit{Ring 0}:\footnote{x86 offers four protection \textit{rings}, of which Linux uses two --- \textit{0} for the kernel, and \textit{3} for userspace.} Figure~\ref{fig:sgx-basic} illustates this. \textit{Enclaves} guarantee both integrity and secrecy to the application running inside it, even in the prescence of a malicious host.
 
-\paragraph{Motivation} At a high level SGX aims to achieve security for sensitive application by shielding them, and the resources it uses, against tampering and to provide a guarantee to end users about an enclave's integrity; this is achieved using attestation (§~\ref{sec:attestation}) and measurement (§~\ref{sec:provisioning}). A driving use case is in a cloud computing context, where users are forced to trust a foreign party with both their data and business logic. By distributing encrypted, yet executable, containers targetting a single, unique SGX core, users can be assured that their information is safe, regardless of any virutalisation that may be taking place. Only the provisioned CPU is able to decrypt and execute the enclave, strictly in accordance with the restrictions of the SGX platform.
+\paragraph{Motivation} At a high level SGX aims to achieve security for sensitive application by shielding them, and the resources it uses, against tampering and to provide a guarantee to end users about an enclave's integrity; this is achieved using attestation and measurement (described in §~\ref{sec:attestation}). A driving use case is in a cloud computing context, where users are forced to trust a foreign party with both their data and business logic. By distributing encrypted, yet executable, containers targetting a single, unique SGX core, users can be assured that their information is safe, regardless of any virutalisation that may be taking place. Only the provisioned CPU is able to decrypt and execute the enclave, strictly in accordance with the restrictions of the SGX platform.
 
 \subsection{Security Characteristics}
 
@@ -117,16 +147,17 @@
 
 \paragraph{Local Attestation} Two enclaves reisdent on the same system are able to attest their identities to each other using their \texttt{MRENCLAVE} and \texttt{MRSIGNER} values; this usually precedes the establishment of a shared secret (using a variant of \textit{Diffie-Hellman} backed by the platform's master SGX key)\footnote{Note for Harri: must check these details.} for confidential communication between them.
 
-\paragraph{Remote Attestation} In addition to attestation between entities on the same platform, the Intel specifiation also provides a workflow for an enclave to attest its identity to a remote party. The system's \textit{Quoting Enclave} verifies an enclave's local \textit{quote} and creates a digital signature of it using the CPU's permanent hardware SGX private key. Through the use of an \textit{Intel Enchanced Privacy Identifier} (\textit{EPID}) this process can be carried out anonymously; it relies on information encoded in the CPU during the manufacturing process. The \textit{Provisioning Enclave} assists in this process, especially as production enclaves are required to attest with Inthel's provisioning service before executing. Remote attestation is not explicitly required in this project's architecture hence will not be covered in any further detail.
+\paragraph{Remote Attestation} In addition to attestation between entities on the same platform, the Intel specifiation also provides a workflow for an enclave to attest its identity to a remote party. The system's \textit{Quoting Enclave} verifies an enclave's local \textit{quote} and creates a digital signature of it using the CPU's permanent hardware SGX private key. Through the use of an \textit{Intel Enchanced Privacy Identifier} (\textit{EPID}) this process can be carried out anonymously; it relies on information encoded in the CPU during the manufacturing process. The \textit{Provisioning Enclave} assists in this process, especially as production enclaves are required to attest with Intel's provisioning service before executing. Remote attestation is not explicitly required in this project's architecture hence will not be covered in any further detail.
 
-\subsection{Provisioning and Sealing}
-\label{sec:provisioning}
+\subsection{Sealing}
+\label{sec:sealing}
 
 \subsection{SGX Versions}
 \label{sec:sgx-versions}
 
-\section{Modern \textit{libOSes}}
 
-\section{Information Flow Control}
+
+
+% -------------
 
 \section{Aspects of the \textit{Linux} Kernel}
