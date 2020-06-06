@@ -25,10 +25,11 @@
 
 
 %\usepackage[dvips]{epsfig,graphics} 
-\usepackage{epsfig,graphicx,verbatim,parskip,tabularx,setspace,xspace,geometry}
+\usepackage{epsfig,graphicx,verbatim,parskip,tabularx,setspace,xspace,geometry,amssymb,mathtools}
 \usepackage[tt=false]{libertine}
 \usepackage{multirow}
-\usepackage{tabularx}
+\usepackage{minted}
+
 
 %% START OF DOCUMENT
 \begin{document}
@@ -82,6 +83,31 @@
 
 \appendix
 \singlespacing
+
+
+
+\begin{minted}{c}
+static asmlinkage void (*_change_pid)(struct task_struct *task, 
+                                      enum pid_type type, struct pid *pid);
+static asmlinkage struct pid* (*_alloc_pid)(struct pid_namespace *ns);
+
+static ssize_t change_pid(void)
+{
+    struct pid* newpid = _alloc_pid(task_active_pid_ns(current));
+    _change_pid(current, PIDTYPE_PID, newpid);
+    /* current->pid has changed. */
+}
+
+static int __init module_init(void)
+{
+    _change_pid = find_sym("change_pid");
+    _alloc_pid = find_sym("alloc_pid");
+    /* ... */
+    /* On SysFS call execute change_pid(void) */
+    return 0;
+}
+
+\end{minted}
 
 \bibliographystyle{unsrt} 
 \bibliography{references} 

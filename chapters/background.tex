@@ -23,11 +23,72 @@
 \paragraph{} The majority of recent research in this areas has advocated \textit{decentralised information flow control} 
 (\textit{DIFC}), introduced by Myers and Liskov.~[X] DIFC is more granular that schemes adhering to the \textit{MLS} model; for example, creating two distinct \textit{security contexts} for two files in the same folder. Policies are discretionary, allowing users to specify and modify the enforced policy for files they own.
 
-\subsection{Security Labels and Tags}
+\subsection{Security Labels and the Reference Monitor}
 
-\paragraph{} 
+\paragraph{} A DIFC system relies on \textit{tags} and \textit{labels} to annotate the entities it tracks. Let $\mathcal{T}$ be a large set of opaque tokens, or \textit{tags}. An individual tag does not carry any particular meaning by itself, but is used as an abstract identifier for the integrity or secrecy of an entity's \textit{security context}. A \textit{label}, $l \subseteq \mathcal{T}$, is a collection of \textit{tags} that are concretely attached to assets, such as files; as already mentioned, these form a lattice under the subset-relation partial order. For each process $a$ there are two labels, one for secrecy, $a_s$, and one for integrity, $a_i$. For a tag, $t$, $t \in a_s$ implies, conservatively, that process $a$ has seen information associated with tag $t$. Conversely, $t \in a_i$ indicates that every input to $a$ has been endorsed for an integrity level marked with $t$.
+
+\paragraph{Walkthrough --- Secrecy Enforcement} In a typical environment a user can only convince themselves that a text editor is safe to use it they, or someone they trust, audits the program's source code. With IFC however, it is possible to reason that if the system can provide the following four guarantees it cannot leak sensitive data without the user's permission.
+
+\begin{enumerate}
+    \item If a process $a$ read a file with a secrecy tag $t$, then $t \in a_s$.
+    \item $t \in a_s$ implies that $a$ cannot communicate with another process, $b$, where $t \notin b_s$.
+    \item $a$ cannot remove $t$ from $a_s$ without permission.
+    \item $t \in a_s$ restricts $a$'s access to an uncontrolled medium, such as a network.
+\end{enumerate}
+
+\paragraph{} The heart an IFC implementation is its \textit{Reference Monitor}. This process tracks the the labelling for each process, granting or rejecting permission to execute an operation before it is served to the operating system. Different solutions handles this process differently: \textit{Flume}, [X] for example, implements a full system interposition layer, forcing all \textit{syscalls} to pass through its userspace \textit{reference monitor} before reaching the OS, whereas \textit{CamFlow} [Y] embeds its \textit{reference monitor} in the kernel itself. In all schemes, however, this trusted component is responsible for the policy and its enforcement on the system. The implementation of this shall be the focus of the project.
+
 
 \subsection{Modelling}
+
+\paragraph{} In centralised IFC schemes the reference monitor is the only entity capable of creating, changing, and assigning tags. DIFC modifies this, giving \textit{all} processes the ability to create and modify tags for the entity they hold ownership over; thus they alone can declassify or endorse them.
+
+\paragraph{Notation} As the model we build in §~\ref{sec:design} is closest in spirit to \textit{CamFlow}, we, for clarity in comparison, use the same notation (as summarised in Table~\ref{table:ifc-notation}).
+
+\begin{equation}
+    A \rightarrow B \iff A_s \preceq B_s \;\; \land \;\; B_i \preceq A_i \tag{$\alpha$}
+  \end{equation}
+
+\begin{equation}
+    A \Rightarrow B \implies A_s = B_s \;\; \land \;\; B_i = A_i \tag{$\beta$}
+\end{equation}
+
+\begin{equation}
+    \left\{\begin{array}{lr}
+        A_x \rightarrow A_x \cup \{t\} & \text{if} \;\; t \in A_{x}^{+} \\
+        A_x \rightarrow A_x \smallsetminus \{t\} & \text{if} \;\; t \in A_{x}^{-} \\
+    \end{array}\right\} \implies A \rightsquigarrow A' \tag{$\gamma$}
+\end{equation}
+
+\begin{equation}
+    A \xhookrightarrow[]{t^{\pm}_{x}} B \;\; \text{only if} \;\; t \in A_{x}^{\pm} \tag{$\beta$}
+\end{equation}
+
+\begin{table}
+    \centering
+    \newcommand\tableTop{\rule{0pt}{3ex}}
+    \newcommand\tableMid{\rule{0pt}{3ex}}
+    \newcommand\tableBottom{\rule[-2ex]{0pt}{0pt}}
+    \begin{tabular}{r p{10cm}} 
+        \hline
+        Notation & Explanation \\ [0.1ex] 
+        \hline
+            \tableTop{$A \rightarrow B$} & \tableTop{Rule $\alpha$; a permissible information flow between entity $A$ and entity $B$.} \\
+            
+            $A \Rightarrow B$ & \tableMid{Rule $\beta$; ....} \\
+
+            $A \rightsquigarrow A'$ & \tableMid{Rule $\gamma$; ....} \\
+            
+            $A \xhookrightarrow[]{t^{\pm}_{x}} B$ & \tableMid{Rule $\delta$; ....} \tableBottom \\
+    \end{tabular}
+    \vspace{5mm}
+    \caption{Overview of notable SGX x86 instructions in an enclave's lifecycle.}
+    \label{table:ifc-notation}
+\end{table}
+
+
+
+
 
 % ---------
 
