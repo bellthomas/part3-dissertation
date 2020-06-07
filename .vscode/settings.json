@@ -1,0 +1,24 @@
+{
+    "grammarly.overrides": [
+        {
+            "files": [
+                "**/chapters/background.tex"
+            ],
+            "config": {
+                "audience": "knowledgeable",
+                "dialect": "british",
+                "domain": "academic",
+                "emotions": [
+                    "confident",
+                    "respectful",
+                    "analytical"
+                ],
+                "goals": [
+                    "inform",
+                    "describe"
+                ],
+                "emotion": "mild"
+            }
+        }
+    ]
+}
