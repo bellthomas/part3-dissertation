@@ -5,6 +5,7 @@
 % -------------
 
 \section{Information Flow Control}
+\label{sec:ifc}
 
 \paragraph{} IFC regulates how and where data is permitted to move and be transformed in a computer system. This differs from access control, which defines what resources may be used by an entity --- IFC allows granular control over how they may be used once accessed, including restricting propagation between components. 
 
@@ -249,7 +250,7 @@
 
 \subsection{Virtual File System}
 
-\paragraph{} Linux represents almost every component as a file; this includes sockets, terminals, and driver interfaces. The role of providing this abstraction falls to the VFS, the core role of which is as a transparent layer, routing requests to the correct underlying implementation. This virtual interface relies on the following mechanisms.
+\paragraph{} Linux represents almost every component as a file; this includes sockets, terminals, and driver interfaces. The role of providing this abstraction falls to the VFS, the core function of which is as a transparent layer, routing requests to the correct underlying implementation. This virtual interface relies on the following mechanisms.
 
 \paragraph{Superblocks} The \textit{superblock} attached to an entity represents the characteristics and properties of the filesystem in which it sits. The metadata it holds includes: the block size, statistics on available blocks, the size and location of the filesystem inode tables, the disk block map, and block grouping data. An important marker held in the superblock is it's \textit{magic value}; this predefined code\footnote{Defined in \texttt{include/uapi/linux/magic.h}.} indicates the underlying implementation the filesystem belongs to. Examples include \textit{EXT4} (\texttt{EXT4\_SUPER\_MAGIC}), \textit{pseudo terminal devices} (Linux shells, \texttt{DEVPTS\_SUPER\_MAGIC}), or sockets via \textit{SockFS} (\texttt{SOCKFS\_MAGIC}).
 
