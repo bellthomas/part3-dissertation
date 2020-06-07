@@ -276,7 +276,7 @@
 
 \subsubsection{Integrity Measurement Architecture}
 
-\paragraph{} Linux's IMA subsystem is responsible for calculating the hashes of files and programs as they are loaded (\textit{measurement}), verifying them against an allowed list if required (\textit{appraisal}). Its driving purpose is to detect if files have been malicious altered either remotely or locally; the file's hash is stored as an \textit{xattr} (\texttt{security.ima}). IMA supports many use cases, the majority of which are complementary to the LSM framework (§~\ref{sec:lsm}), but we shall focus on one here, EVM.
+\paragraph{} Linux's IMA subsystem is responsible for calculating the hashes of files and programs as they are loaded (\textit{measurement}), verifying them against an allowed list if required (\textit{appraisal}). Its driving purpose is to detect if files have been maliciously altered either remotely or locally; the file's hash is stored as an \textit{xattr} (\texttt{security.ima}). IMA supports many use cases, the majority of which are complementary to the LSM framework (§~\ref{sec:lsm}), but we shall focus on one here, EVM.
 
 \paragraph{} The Linux \textit{Extended Verification Module}, \textit{EVM}, hardens IMA by protecting \textit{xattrs} in the \texttt{security} namespace --- this covers both the IMA hash and any labels created by security modules. Two tamper-detection methods are provided:
 
