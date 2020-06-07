@@ -257,12 +257,30 @@
 
 \paragraph{Dentries} Each item in the \textit{direct entry cache} (\textit{dcache}), shortened to \textit{dentry}, represents a connection between an inode and the path they reside at in the VFS. This glue layer is responsible for building the tangible folder structure, and as the name suggests, metadata caching. A \textit{file} consists of a \textit{dentry}-\textit{inode} pair.
 
-\paragraph{File descriptors} Whenever a process opens a file, it is presented with a \textit{file descriptor} by the kernel (via \texttt{open()} or similar). This structure is unique to a process, providing the gateway between the process and the underlying file it describes. All active descriptors can be viewed at \texttt{/proc/<pid>/fd/}; \textit{0} refers to \textit{stdin}, \textit{1} to \textit{stdout}, and \textit{2} to \textit{stderr}.
+\paragraph{File descriptors} Whenever a process opens a file, it is presented with a \textit{file descriptor} by the kernel (via \texttt{open()} or similar). This structure is unique to a process, providing the gateway between the process and the underlying file it describes. All active descriptors can be viewed at \texttt{/proc/<pid>/fd/}; \textit{0} refers to \textit{stdin}, \textit{1} to \textit{stdout}, and \textit{2} to \textit{stderr}. Reads and write to a file (or socket, pipe, etc.) are performed on the relevant file descriptor, not the object itself.
 
-% \subsubsection{Inodes and the Dcache}
+\subsubsection{Extended Attributes} 
 
-\subsubsection{Extended Attributes}
+\paragraph{} Files can have additional, external, key-value pairs attached to them. These attributes, shortened to \textit{xattrs}, are permanent and saved to disk alongside the file's content. Values are optional and may be left empty if the attribute is just a flag. If a value is specified it must be in the form of a null-terminated string. \textit{xattrs} are namespaces to define different classed of functionality; the \texttt{user} namespace is open to all (e.g. \texttt{user.example\_attribute}), but \texttt{trusted}, \texttt{system}, and \texttt{security} are reserved for specific uses by the kernel --- the \texttt{security} namespace will be used in §~\ref{sec:lsm}.
 
 \subsubsection{Integrity Measurement Architecture}
 
+\paragraph{} Linux's IMA subsystem is responsible for calculating the hashes of files and programs as they are loaded (\textit{measurement}), verifying them against an allowed list if required (\textit{appraisal}). Its driving purpose is to detect if files have been malicious altered either remotely or locally; the file's hash is stored as an \textit{xattr} (\texttt{security.ima}). IMA supports many use cases, the majority of which are complementary to the LSM framework (§~\ref{sec:lsm}), but we shall focus on one here, EVM.
+
+\paragraph{} The Linux \textit{Extended Verification Module}, \textit{EVM}, hardens IMA by protecting \textit{xattrs} in the \texttt{security} namespace --- this covers both the IMA hash and any labels created by security modules. Two tamper-detection methods are provided:
+
+\begin{enumerate}
+    \item The \textit{HMAC-SHA1} hash of the \texttt{security} namespace is stored as \texttt{security.evm} for reference, and
+    \item A digital signature of this value is stored alongside using a key that is sealed either using a \textit{TPM}\footnote{Trusted Platform Module. TODO more here} or passphrase.
+\end{enumerate}
+
+
+
 \subsection{Linux Security Modules}
+\label{sec:lsm}
+
+\paragraph{} Linux supports the inclusion of third-party security models in the kernel itself using a unified framework, LSM. This provides developers with \textit{hooks} into kernel functionality at every point a userspace process's \textit{syscall} is about to access fundamental kernel primitives, such as inodes or task control structures. Each of these hooks can influence to behaviour of the kernel by allowing of denying the operation.
+
+\paragraph{} LSM attaches a \texttt{void*} security field to every instance of kernel primitives, such as \texttt{struct inode}, to allow the security implementation to attach additional state to each, tracking them in whatever way is most appropriate.
+
+\paragraph{} Decisions taken within an LSM affect all aspects of a Linux system; \textit{superuser} privilege cannot override it and every component in the system can be restricted.
