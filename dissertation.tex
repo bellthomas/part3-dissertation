@@ -86,28 +86,28 @@
 
 
 
-\begin{minted}{c}
-static asmlinkage void (*_change_pid)(struct task_struct *task, 
-                                      enum pid_type type, struct pid *pid);
-static asmlinkage struct pid* (*_alloc_pid)(struct pid_namespace *ns);
+% \begin{minted}{c}
+% static asmlinkage void (*_change_pid)(struct task_struct *task, 
+%                                       enum pid_type type, struct pid *pid);
+% static asmlinkage struct pid* (*_alloc_pid)(struct pid_namespace *ns);
 
-static ssize_t change_pid(void)
-{
-    struct pid* newpid = _alloc_pid(task_active_pid_ns(current));
-    _change_pid(current, PIDTYPE_PID, newpid);
-    /* current->pid has changed. */
-}
+% static ssize_t change_pid(void)
+% {
+%     struct pid* newpid = _alloc_pid(task_active_pid_ns(current));
+%     _change_pid(current, PIDTYPE_PID, newpid);
+%     /* current->pid has changed. */
+% }
 
-static int __init module_init(void)
-{
-    _change_pid = find_sym("change_pid");
-    _alloc_pid = find_sym("alloc_pid");
-    /* ... */
-    /* On SysFS call execute change_pid(void) */
-    return 0;
-}
+% static int __init module_init(void)
+% {
+%     _change_pid = find_sym("change_pid");
+%     _alloc_pid = find_sym("alloc_pid");
+%     /* ... */
+%     /* On SysFS call execute change_pid(void) */
+%     return 0;
+% }
 
-\end{minted}
+% \end{minted}
 
 \bibliographystyle{unsrt} 
 \bibliography{references} 
