@@ -235,10 +235,11 @@
 
 \subsection{Sealing}
 \label{sec:sealing}
+\paragraph{} \textit{Sealing} refers to the encryption of data using a key related to the generating enclave; this key is unique to that enclave on a particular platform. SGX offers two policies for deriving the encryption key based on the platform's \textit{Root Sealing Key} --- sealing to the current enclave (\texttt{MRENCLAVE}) or the current enclave's author (\texttt{MRSIGNER}). These serve many use cases, including allowing for state to persist through enclave upgrades, and also communication between enclaves produced by the same \textit{Sealing Authority}.
 
 \subsection{SGX Versions}
 \label{sec:sgx-versions}
-
+\paragraph{} At the time of writing there are two versions of SGX available, \textit{v1} and \textit{v2} --- the details given here relate to \textit{v1}. \textit{v2} offers a number of improvements, including: (a) dynamic memory management, (b) eased production enclave restrictions (`Flexible Launch Control'), (c) increased PRM size support, and (d) support for virtualisation. This project will accomodate both and not rely on any of the aforementioned.
 
 
 
