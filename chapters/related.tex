@@ -9,12 +9,12 @@
 \paragraph{CamFlow} Contrasting with \textit{Flume}, the \textit{CamFlow} core IFC implementation lies entirely within its LSM, efficiently exploiting kernel functionality to minimise the overhead it creates. It reports an 11\% average overhead for file operations in microbenchmark tests.
 
 
-\subsection{Other IFC Systems}
+\subsubsection{Other IFC Systems}
 \paragraph{} Many different approaches to IFC have been published over the years; the most influential to this project will be briefly summarised.
 
-\paragraph{} \textit{Asbestos}, a prototype operating system by Krohn et al.~[X] that provides entity labelling and isolation as an OS primitive. Applications express individual policies via a custom kernel interface, including IPC and system-wide information flows. A novel event abstraction and sub-process \textit{security contexts} allows processes to act on behalf of multiple entities. \textit{HiStar} (Zeldovich et al.~[Y]) builds on the \textit{Asbestos} model, minimising the size of the system's TCB --- the system has no notion of \textit{superuser}, with no code other than the kernel being fully trusted. An important consequence of this is that the risk of data leaking via \textit{covert channels} is drastically reduced. \textit{DStar} (... ~[Z]) translates \textit{HiStar} into a distributed concept, translating labels between IFC-enabled hosts with the help of a globally-meaningful set of tags. \textit{Aeolus} (), derived from \textit{Asbestos} (Cheng et al.~[A]), deploys a common TCB across all nodes in a distributed system to enforce IFC; it filters I/O and both inter- and intra- process communication.
+\paragraph{} \textit{Asbestos}, a prototype operating system by Krohn et al.~[X] that provides entity labelling and isolation as an OS primitive. Applications express individual policies via a custom kernel interface, including IPC and system-wide information flows. A novel event abstraction and sub-process \textit{security contexts} allows processes to act on behalf of multiple entities. \textit{HiStar} (Zeldovich et al.~[Y]) builds on the \textit{Asbestos} model, minimising the size of the system's TCB --- the system has no notion of \textit{superuser}, with no code other than the kernel being fully trusted. An important consequence of this is that the risk of data leaking via \textit{covert channels} is drastically reduced. \textit{DStar} (Zeldovich et al.~[Z]) translates \textit{HiStar} into a distributed concept, translating labels between IFC-enabled hosts with the help of a globally-meaningful set of tags. \textit{Aeolus} (Cheng et al.~[A]), derived from \textit{Asbestos}, deploys a common TCB across all nodes in a distributed system to enforce IFC; it filters I/O and both inter- and intra- process communication.
 
-\paragraph{} Laminar (Roy et al.~[B] takes a similar approach to \textit{Flume}) at the OS-level, using an LSM for policy enforcement, but extends it with customisation to the JVM\footnote{Java Virtual Machine} to support thread-level isolation and heap-object protection. This approach has proved powerful to applying DIFC to popular processing systems such as \textit{MapReduce}~[X] and Hadoop~[Y].
+\paragraph{} Laminar (Roy et al.~[B] takes a similar approach to \textit{Flume}) at the OS-level, using an LSM for policy enforcement, but extends it with customisation to the JVM\footnote{Java Virtual Machine} to support thread-level isolation and heap-object protection. This approach has proved powerful in applying DIFC to popular processing systems such as \textit{MapReduce}~[X] and \textit{Hadoop}~[Y].
 
 
 \section{Interoperation between Linux and SGX} 
@@ -33,9 +33,12 @@
 
 
 \section{Dataflow Protection using SGX}
+\paragraph{} Research into applying the protections afforded by SGX to large-scale distributed computation has been fervent in the past few years --- a handful of prominent projects are here detailed. 
 
-
-
-
-\paragraph{Notes} SecureStreams, Scone, VC3, Maru (Jon), Ryoan
+\begin{itemize}
+    \item \textit{SCONE}~[X] presents a secure container framework for \textit{Docker}.~[Y] Using secured version of the standard library for C it transparently encrypts/decrypts I/O crossing the container's boundary. The authors claim $\times 0.6-1.2$ the performance of native throughput.
+    \item \textit{VC3}~[X] secures \textit{Hadoop} \textit{MapReduce} computations --- the \textit{Hadoop} platform is not considered part of the TCB, thus allowing the system's security invariants to remain unaffected if it were to be compromised. The reported performance overhead is stated to be 8\% (for full read/write integrity).
+    \item The \textit{Maru} project~[X] added support for running distributed \textit{Apache Spark} in SGX enclaves. Data residing outside of a worker in \textit{HDFS} is sealed (encrypted), as with \textit{VC3} removing the needs for the need for \textit{Hadoop} to be a part of the TCB. A notably difficulty faced was porting the \textit{JVM}\footnote{Java Virtual Machine} to function efficiently inside an enclave; SGXv1 restricts the EPC size to 128MB, severely penalising applications that struggle to run in relatively small memory footprints.
+    \item \textit{Ryoan}~[X] provides a distributed sandbox environment to confine untrusted applications running on sensitive data in the cloud; a specific use case is computation outsourcing. It uses \textit{confining labels} to create a weakened form of IFC tracking; processing nodes must be stateless and once tainted by a request cannot access resources outside the execution environment. Enforcement is managed both by SGX and \textit{NaCl}~[X] for the host application. 
+\end{itemize}
 
