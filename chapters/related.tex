@@ -9,14 +9,18 @@
 \paragraph{CamFlow} Contrasting with \textit{Flume}, the \textit{CamFlow} core IFC implementation lies entirely within its LSM, efficiently exploiting kernel functionality to minimise the overhead it creates. It reports an 11\% average overhead for file operations in microbenchmark tests.
 
 
-\section{Other IFC Systems}
-\paragraph{} Many different approaches to IFC have been published over the years; the most influential will be briefly summarised.
+\subsection{Other IFC Systems}
+\paragraph{} Many different approaches to IFC have been published over the years; the most influential to this project will be briefly summarised.
+
+\paragraph{} \textit{Asbestos}, a prototype operating system by Krohn et al.~[X] that provides entity labelling and isolation as an OS primitive. Applications express individual policies via a custom kernel interface, including IPC and system-wide information flows. A novel event abstraction and sub-process \textit{security contexts} allows processes to act on behalf of multiple entities. \textit{HiStar} (Zeldovich et al.~[Y]) builds on the \textit{Asbestos} model, minimising the size of the system's TCB --- the system has no notion of \textit{superuser}, with no code other than the kernel being fully trusted. An important consequence of this is that the risk of data leaking via \textit{covert channels} is drastically reduced. \textit{DStar} (... ~[Z]) translates \textit{HiStar} into a distributed concept, translating labels between IFC-enabled hosts with the help of a globally-meaningful set of tags. \textit{Aeolus} (), derived from \textit{Asbestos} (Cheng et al.~[A]), deploys a common TCB across all nodes in a distributed system to enforce IFC; it filters I/O and both inter- and intra- process communication.
+
+\paragraph{} Laminar (Roy et al.~[B] takes a similar approach to \textit{Flume}) at the OS-level, using an LSM for policy enforcement, but extends it with customisation to the JVM\footnote{Java Virtual Machine} to support thread-level isolation and heap-object protection. This approach has proved powerful to applying DIFC to popular processing systems such as \textit{MapReduce}~[X] and Hadoop~[Y].
 
 
 \section{Interoperation between Linux and SGX} 
-\paragraph{} The relationship between SGX and Linux has at times been difficult; Intel has been attempting to upstream \textit{isgx}, the SGX driver, into the mainline kernel for 6 years.\footnote{The patch set is currently in its $32^{\text{nd}}$ revision; \url{https://lore.kernel.org/linux-sgx/}.} A source of extreme friction lies in the fact that enclaves are not operable in ring 0, forcing research seeking to use SGX to harden the kernel itself to be creative about how to integrate it.
+\paragraph{} The relationship between SGX and Linux has at times been difficult; Intel has been attempting to upstream \textit{isgx}, the SGX driver, into the mainline kernel for 6 years.\footnote{The \textit{linux-sgx} patch set is currently in its $32^{\text{nd}}$ revision; \url{https://lore.kernel.org/linux-sgx/}.} A source of extreme friction lies in the fact that enclaves are not operable in ring 0, forcing research seeking to use SGX to harden the kernel itself to be creative about how to integrate it.
 
-\paragraph{} The \textit{TresorSGX}~[X] project was one of the first to consider the practicalities of this relationship seriously, constructing an externalised interface for kernel functionality to be offloaded to an enclave via a specialised kernel module. Particularly focussing on disk encryption, the prototype achieved its security goals but struggled with performance, only being able to perform at 1\% the bandwidth its kernel-embedded counterpart. As concluded by the authors, the most prevalent performance hit came from kernel $\leftrightarrow$ enclave communication overhead, made worse by the need to exit and reenter kernel-mode.
+\paragraph{} The \textit{TresorSGX}~[X] project was one of the first to consider the practicalities of this relationship seriously, constructing an externalised interface for kernel functionality to be offloaded to an enclave via a specialised kernel module. Mainly focussing on disk encryption, the prototype achieved its security goals but struggled with performance, only being able to perform at 1\% the bandwidth its kernel-embedded counterpart. As concluded by the authors, the most prevalent performance hit came from kernel $\leftrightarrow$ enclave communication overhead, made worse by the need to exit and reenter kernel-mode.
 
 
 \paragraph{} Various other studies touch upon these issues, including:
@@ -33,5 +37,5 @@
 
 
 
-\paragraph{Notes} SecureStreams, Scone, VC3, Maru (Jon)
+\paragraph{Notes} SecureStreams, Scone, VC3, Maru (Jon), Ryoan
 
