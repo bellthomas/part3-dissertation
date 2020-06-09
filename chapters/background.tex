@@ -7,22 +7,22 @@
 \section{Information Flow Control}
 \label{sec:ifc}
 
-\paragraph{} IFC regulates how and where data is permitted to move and be transformed in a computer system. This differs from access control, which defines \textit{what} resources may be used by an entity --- IFC allows granular control over \textit{how} they may be used once accessed, including restricting propagation between components. 
+\paragraph{} IFC regulates how and where data is permitted to move and be transformed in a computer system.~\cite{ifc-data-prop} This differs from access control, which defines \textit{what} resources may be used by an entity --- IFC allows granular control over \textit{how} they may be used once accessed, including restricting propagation between components. 
 
-\paragraph{} Formally, IFC defines and enforces a non-interference policy between abstract \textit{security contexts}. A simple, atomic example is the distinction between \textit{unclassified} and \textit{classified} data --- here, information is only allowed to flow \textit{up}, ensuring that an \textit{unclassified} entity does not learn anything marked as \textit{classified}. In general this form of relationship can be represented as a partial ordering over \textit{security contexts}, enumerated in the form of a lattice.
+\paragraph{} Formally, IFC defines and enforces a non-interference policy between abstract \textit{security contexts}. A simple, atomic example is the distinction between \textit{unclassified} and \textit{classified} data --- here, information is only allowed to flow \textit{up}, ensuring that an \textit{unclassified} entity does not learn anything marked as \textit{classified}.~\cite{Bell1973SecureCS} In general this form of relationship can be represented as a partial ordering over \textit{security contexts}, formulated as a lattice.~\cite{ifc-lattice}
 
-\paragraph{} However, practical systems often require dataflow adhering to a more complicated policy set --- for example, supporting \textit{declassification}. Work undertaken by Pasquier et al., [X] which will be the core influence of the IFC model developed in this project, constructs a pliable and efficient \textit{decentralised information flow control} (\textit{DIFC}) model suitable for provenance enforcement and auditing in the Linux kernel.
+\paragraph{} However, practical systems often require dataflow adhering to a more complicated policy set --- for example, supporting \textit{declassification}.~\cite{10.5555/794199.795122} Work undertaken by Pasquier et al.,~\cite{camflow} which will be the core influence of the IFC model developed in this project, constructs a pliable and efficient \textit{decentralised information flow control} (\textit{DIFC}) model suitable for provenance enforcement and auditing in the Linux kernel.
 
-\paragraph{} The concepts presented are primarily derived from Pasquier~[X] and Krohn et al.~[Y].
+\paragraph{} The concepts presented are primarily derived from Pasquier~\cite{camflow} and Krohn et al.~\cite{flume}.
 
 \subsection{Motivation, History, and \textit{Decentralised IFC}}
 
 \paragraph{} IFC has, in recent years, been increasing in support as a powerful methodology for ensuring granularly privacy whilst simultaneously not unduly restricting access to sensitive information. IFC annotates data records with opaque \textit{labels} that refer to either their confidentiality or integrity status. Rather than simply restricting access to sensitive data, as would be the action taken by an access control mechanism, IFC opts to track data as it propagates --- if an entity attempts to move this into an unknown, untrusted, or conflicting \textit{security context} the IFC system prevents this to ensure data is not improperly released.
 
-\paragraph{} IFC originated from research conducted in the mid-1970s~[X,Y] but has not, as of yet, seen mainstream adoption. A major reason for this is that early schemes were designed around the \textit{multi-level security} (\textit{MLS}) doctrine set out in the \textit{Orange Book}:~[Z] this locked IFC to a shallow set of broad labels, mirroring existing institutional segregation (such as \textit{restricted}, \textit{secret}, \textit{top secret}). Policies were managed centrally, something easily applicable in settings with rigorous hierarchies such as the military, but unwieldy in an organisation with manifold security protocols.
+\paragraph{} IFC originated from research conducted in the mid-1970s~\cite{ifc-lattice} but has not, as of yet, seen mainstream adoption. A major reason for this is that early schemes were designed around the \textit{multi-level security} (\textit{MLS}) doctrine set out in the \textit{Orange Book}:~\cite{orange-book} this locked IFC to a shallow set of broad labels, mirroring existing institutional segregation (such as \textit{restricted}, \textit{secret}, \textit{top secret}). Policies were managed centrally, something easily applicable in settings with rigorous hierarchies such as the military, but unwieldy in an organisation with manifold security protocols.
 
 \paragraph{} The majority of recent research in this area has advocated \textit{decentralised information flow control} 
-(\textit{DIFC}), introduced by Myers and Liskov.~[X] DIFC is more granular that schemes adhering to the \textit{MLS} model, for example, creating two distinct \textit{security contexts} for two files in the same folder. Policies are \textit{discretionary}, allowing users to specify and modify the enforced policies for assets they own.
+(\textit{DIFC}), introduced by Myers and Liskov.~\cite{difc,10.1145/363516.363526,10.1145/268998.266669} DIFC is more granular that schemes adhering to the \textit{MLS} model, for example, creating two distinct \textit{security contexts} for two files in the same folder. Policies are \textit{discretionary}, allowing users to specify and modify the enforced policies for assets they own.
 
 \subsection{Security Labels and the Reference Monitor}
 
@@ -37,7 +37,7 @@
     \item $t \in a_s$ restricts $a$'s access to an uncontrolled medium, such as a network.
 \end{enumerate}
 
-\paragraph{} The heart of an IFC implementation is its \textit{Reference Monitor}, which tracks the labelling for each process, granting or rejecting permission to execute an operation before being served to the operating system. Different solutions handles this process differently: \textit{Flume}, [X] for example, implements a full system interposition layer, forcing all \textit{syscalls} to pass through its userspace \textit{reference monitor} before reaching the OS, whereas \textit{CamFlow} [Y] embeds its \textit{reference monitor} in the kernel itself. In all schemes, however, this trusted component is responsible for the policy and its enforcement on the system. The implementation of this shall be the focus of this project.
+\paragraph{} The heart of an IFC implementation is its \textit{Reference Monitor}, which tracks the labelling for each process, granting or rejecting permission to execute an operation before being served to the operating system. Different solutions handle this process differently: \textit{Flume},~\cite{flume} for example, implements a full system interposition layer, forcing all \textit{syscalls} to pass through its userspace \textit{reference monitor} before reaching the OS, whereas \textit{CamFlow}~\cite{camflow} embeds its \textit{reference monitor} in the kernel itself. In all schemes, however, this trusted component is responsible for the policy and its enforcement on the system. This project focusses on this implementation.
 
 
 \subsection{Modelling}
@@ -70,7 +70,7 @@
 
 \paragraph{Notation} As the model we build in §~\ref{sec:design} is closest in spirit to \textit{CamFlow}, we, for clarity in comparison, use the same notation (as summarised in Table~\ref{table:ifc-notation}).
 
-\paragraph{Enforcing Safe Flows} ($\alpha$), below, describes the conditions in which a flow can be considered \textit{safe}, abiding by the system's IFC policy. Verbally, the recipient must be \textit{at least as privileged} as the originator and cannot accept information graded below its own integrity status. Here $\preceq$ denote any applicable preorder relation; thias context uses inclusion ($\subseteq$). If a flow is \textit{impermissible} it is denoted as $A \nrightarrow B$.
+\paragraph{Enforcing Safe Flows} ($\alpha$), below, describes the conditions in which a flow can be considered \textit{safe}, abiding by the system's IFC policy. Verbally, the recipient must be \textit{at least as privileged} as the originator and cannot accept information graded below its own integrity status. Here $\preceq$ denote any applicable preorder relation; this context uses inclusion ($\subseteq$). If a flow is \textit{impermissible} it is denoted as $A \nrightarrow B$.
 \begin{equation}
     A \rightarrow B \iff A_s \preceq B_s \;\; \land \;\; B_i \preceq A_i \tag{$\alpha$}
 \end{equation}
@@ -109,7 +109,7 @@
 
 \paragraph{} As an example, delegation is vital for a web server. To transmit another entity's information over an untrusted socket the server must have permission to \textit{declassify} it --- i.e. it must hold $f_{s}^{-}$, where $f$ is the secrecy label of the information to transmit.\footnote{The server process, $W$, must have $W_{i} = \varnothing$ as it holds a connection to an untrusted socket. Thus the integrity clause in ($\alpha$) will not interfere.}
 
-\paragraph{Conflict of Interest} The \textit{CamFlow} model additionally specifies a formalisation to avoid violating mutually exclusive tag-pairs being held simultaneously. This will be discussed in further detail in §~0.0,\footnote{TODO link} but is not essential to add to our understanding at this point.
+\paragraph{Conflict of Interest} The \textit{CamFlow} model additionally specifies a formalisation to avoid violating mutually exclusive tag-pairs being held simultaneously. This will be discussed in further detail in §~5.X,\footnote{TODO link} but is not essential to add to our understanding at this point.
 
 
 
@@ -117,9 +117,9 @@
 
 \section{Intel SGX}
 
-\paragraph{} Intel's Software Guard Extensions, SGX, was first announced and detailed in a handful of whitepaper documents published in 2013. [X,Y,Z] It described a novel approach to \textit{trusted computing}, creating in-CPU containers with dedicated protected memory pools. These regions, called \textit{enclaves}, cannot be read from or written to by an unauthorised party due to fundamental protection mechanisms provided by the x86 architecture, even if running in \textit{Ring 0}:\footnote{x86 offers four protection \textit{rings}, of which Linux uses two --- \textit{0} for the kernel, and \textit{3} for userspace.} Figure~\ref{fig:sgx-basic} illustrates this. \textit{Enclaves} guarantee both integrity and secrecy to the application running inside it, even in the presence of a malicious host.
+\paragraph{} Intel's Software Guard Extensions, SGX, was first announced and detailed in a handful of whitepaper documents published from 2013.~\cite{10.1145/2487726.2488370, 10.1145/2487726.2488368, Anati2013InnovativeTF, sgx-sgx-reference} It described a novel approach to \textit{trusted computing}, creating in-CPU containers with dedicated protected memory pools. These regions, called \textit{enclaves}, cannot be read from or written to by an unauthorised party due to fundamental protection mechanisms provided by the x86 architecture, even if running in \textit{Ring 0}:\footnote{x86 offers four protection \textit{rings}, of which Linux uses two --- \textit{0} for the kernel, and \textit{3} for userspace.} Figure~\ref{fig:sgx-basic} illustrates this. \textit{Enclaves} guarantee both integrity and secrecy to the application running inside it, even in the presence of a malicious host.
 
-\paragraph{Motivation} At a high-level SGX aims to achieve security for sensitive application by shielding them, and the resources it uses, against tampering, and to provide a guarantee to end-users about an enclave's integrity; this is achieved using attestation and measurement (described in §~\ref{sec:attestation}). A driving use case is in a cloud computing context, where users are forced to trust a foreign party with both their data and business logic. By distributing encrypted, yet executable, containers targetted at a single, unique SGX core, users can be assured that their information is safe, regardless of any virtualisation that may be taking place. Only the provisioned CPU is able to decrypt and execute the enclave, strictly in accordance with the restrictions of the SGX platform.
+\paragraph{Motivation} At a high-level SGX aims to achieve security for sensitive applications by shielding them, and the resources they use, against tampering, and to provide a guarantee to end-users of an enclave's integrity; this is achieved using attestation and measurement (described in §~\ref{sec:attestation}). One of many use cases~\cite{10.1145/2834050.2834100, 10.1145/2799647, 10.1145/2810103.2813695} is in a cloud computing context, where users are forced to trust an outside party with both their data and business logic. By distributing encrypted, yet executable, containers targetted at a single, unique SGX core, users can be assured that their information is safe, regardless of any virtualisation that may be taking place. Only the provisioned CPU is able to decrypt and execute the enclave, strictly in accordance with the restrictions of the SGX platform.
 
 \subsection{Security Characteristics}
 
@@ -130,13 +130,13 @@
     \label{fig:sgx-basic}
 \end{figure}
 
-\paragraph{} At its heart SGX is designed to be \textit{trustworthy}; this is achieved in a number of ways, including robust enclaving provisioning, sealing and attestation. Intel enumerates SGX's protections as follows;
+\paragraph{} At its heart SGX is designed to be \textit{trustworthy}; this is achieved in a number of ways, including robust enclaving provisioning, sealing and attestation. Intel enumerates SGX's protections~\cite{10.1145/2487726.2488368,sgx-eval-sdk} as follows;
 
 \begin{itemize}
-    \item Memory is secured against observation and modification from outside the enclave, achieved using an in-die \textit{Memory Encryption Engine} (\textit{MEE}), with a secret that rotates on every boot. This protection notably works against host hypervisors, other enclaves, and anything running in supervisor mode.
+    \item Memory is secured against observation and modification from outside the enclave, achieved using an in-die \textit{Memory Encryption Engine} (\textit{MEE}),~\cite{sgx-mee} with a secret that rotates on every boot. This protection notably works against host hypervisors, other enclaves, and anything running in supervisor mode.
     \item Enclaves can \textit{attest to}, or prove, their identity to a challenger with the help of a permanent hardware security key for asymmetric encryption.
     \item Software calls are proxied to prepare and transfer control in and out of an enclave. Arguments are securely marshalled according to a static enclave definition.
-    \item SGX does not defend against reverse engineering or side-channel attacks: [X,Y] this is the responsibility of the developer to mitigate.
+    \item SGX does not defend against reverse engineering or side-channel attacks:~\cite{10.1109/SP.2015.45} this is the responsibility of the developer to mitigate.
     \item Debugging support is only provided via a specialised tool and only when an enclave is compiled with debugging enabled.
 \end{itemize}
 
@@ -149,13 +149,13 @@
     \label{fig:sgx-advarch}
 \end{figure}
 
-\paragraph{} The SGX platform comprises a number of interlocking parts, as shown in Figure~\ref{fig:sgx-advarch}. Working from the hardware up, at the heart of the platform is the extended x86 instruction set and memory protection provided by an SGX-capable CPU. 
+\paragraph{} The SGX platform comprises a number of interlocking parts, as shown in Figure~\ref{fig:sgx-advarch}. Working from the hardware up, at the heart of the platform is the extended x86 instruction set and memory protection provided by an SGX-capable CPU. Information as reported by~\cite{sgx-sgx-reference,Costan2016IntelSE}.
 
 \paragraph{Hardware} Enclaves' data and code is stored securely in \textit{Processor Reserved Memory}, \textit{PRM}; this is a set of pages in system memory that are presided over by the \textit{MEE}. DMA\footnote{Direct Memory Access} to \textit{PRM} is always rejected. \textit{PRM} consists of two data structures; the \textit{Enclave Page Cache Map} (\textit{EPCM}) and the \textit{Enclave Page Cache} (\textit{EPC}). An individual enclave is defined by an \textit{SGX Enclave Control Structure}, \textit{SECS}; this is generated when an enclave is created and stored in a dedicated entry in the \textit{EPC}. An enclave's \textit{SECS} contains important information such as its (system) global identifier, its measurement hash (\texttt{MRENCLAVE}, §~\ref{sec:attestation}) and the amount of memory it is using. Access control information is stored in the \textit{EPCM} alongside page validity flags, the owning enclave identifier and the page's type; this is not accessible in software. An attempt to resolve a page in \textit{PRM} is successful only if the CPU is executing in enclave mode and its \textit{EPCM} entry states it belongs the currently executing enclave --- if this is not the case the lookup returns an unused page from generic system memory.
 
 \paragraph{} The host OS or hypervisor manages the \textit{EPC} just as it does with standard system memory, swapping pages in and out according to its own policy, but must do so using SGX specific instructions. The \textit{MEE} is responsible for ensuring the integrity and confidentiality of this process, encrypting and decrypting pages as they cross the \textit{PRM} boundary. Data is verified with the use of an integrity tree, and encryption keys are generated at boot-time. Importantly the SGX architecture relies on the host OS being SGX-aware, empowering userspace applications to function without privilege; this is provided by the SGX driver, \textit{isgx}.
 
-\paragraph{Userspace services} Starting an enclave requires retrieving a \textit{launch token} from Intel's \textit{Launch Enclave}; this checks the signature and identity of the enclave to ensure it is valid. Access to the \textit{Launch Enclave} and other architectural enclaves is provided by the AESM service; the userspace SGX libraries facilitate the communication mechanism. Other architectural enclaves include;
+\paragraph{Userspace services} Starting an enclave requires a \textit{launch token} to be reteived from Intel's \textit{Launch Enclave}; this checks the signature and identity of the enclave to ensure it is valid. Access to the \textit{Launch Enclave} and other architectural enclaves is provided by the AESM service; the userspace SGX libraries facilitate the communication mechanism. Other architectural enclaves include;
 
 \begin{itemize}
     \item The \textit{Provisioning Enclave} --- this verifies the authenticity of the platform and retrieves an enclave's \textit{attestation key} from the \textit{Intel Provisioning Service's} servers.
@@ -188,7 +188,7 @@
 
 \paragraph{} Interrupts and exceptions can be served to the enclave, just as with any other application. However, control is not immediately passed over to the defined handler. Instead, the enclave's current state is saved and cleared to ensure no data is leaked. The \textit{Asynchronous Enclave Exit} routine is then invoked and enclave mode disabled. Execution post-interruption is restarted with the \texttt{ERESUME} instruction. Once an enclave has finished executing the registers are erased and \texttt{EEXIT} called. Enclaves are terminated using the \texttt{EREMOVE} command; all claimed \textit{EPC} pages are marked as invalid and the \textit{SECS} page deleted.
 
-\paragraph{} \label{sec:sgx-no-kernel-mode} A significant design decision made in the SGX architecture is that enclaves cannot be entered by a process operating in \textit{Ring 0}; the required instructions simply aren't available. This forces all host applications to run in userspace, making interoperation with the kernel challenging, as will be discussed in §~\ref{sec:design}.
+\paragraph{} \label{sec:sgx-no-kernel-mode} A significant design decision made in the SGX architecture is that enclaves cannot be entered by a process operating in \textit{Ring 0};~\cite{sgx-prog-reference} the required instructions simply aren't available. This forces all host applications to run in userspace, making interoperation with the kernel challenging, as will be discussed in §~\ref{sec:design}.
 
 \begin{table}
     \centering
@@ -215,7 +215,7 @@
         \hline
     \end{tabular}
     \vspace{5mm}
-    \caption{Overview of notable SGX x86 instructions in an enclave's lifecycle.}
+    \caption{Overview of notable SGX x86 instructions in an enclave's lifecycle.~\cite{sgx-prog-reference}}
     \label{table:sgx-instructions}
 \end{table}
 
@@ -223,7 +223,7 @@
 \subsection{Attestation}
 \label{sec:attestation}
 
-\paragraph{} An essential feature of the \textit{trusted computing} model SGX creates is attestation, the process of verifying both the authenticity and integrity of components cryptographically. SGX achieves by creating two hashed values, or \textit{signing identifiers}, per enclave; \texttt{MRENCLAVE} and \texttt{MRSIGNER}.
+\paragraph{} An essential feature of the \textit{trusted computing} model SGX creates is attestation, the process of verifying both the authenticity and integrity of components cryptographically. SGX achieves by creating two hashed values, or \textit{signing identifiers}, per enclave; \texttt{MRENCLAVE} and \texttt{MRSIGNER}.~\cite{Anati2013InnovativeTF,sgx-prov-service}
 
 \paragraph{} \texttt{MRENCLAVE} acts an a unique identifier for the contents of an enclave. It is generated by hashing the instructions and data passed when creating the enclave with \texttt{ECREATE}, \texttt{EADD}, and \texttt{EEXTEND}; the value is finalised and stored in the \textit{SECS} on \texttt{EINIT}. This value depends on the exact content and ordering of the enclave's \textit{EPC} pages. As long as the enclave's source remains the same, so will its \texttt{MRENCLAVE}.
 
@@ -231,7 +231,7 @@
 
 \paragraph{Local Attestation} Two enclaves resident on the same system are able to attest their identities to each other using their \texttt{MRENCLAVE} and \texttt{MRSIGNER} values; this usually precedes the establishment of a shared secret (using a variant of \textit{Diffie-Hellman} backed by the platform's master SGX key)\footnote{Note for Harri: must check these details.} for confidential communication between them.
 
-\paragraph{Remote Attestation} In addition to attestation between entities on the same platform, the Intel specification also provides a workflow for an enclave to attest its identity to a remote party. The system's \textit{Quoting Enclave} verifies an enclave's local \textit{quote} and creates a digital signature of it using the CPU's permanent hardware SGX private key. Through the use of an \textit{Intel Enhanced Privacy Identifier} (\textit{EPID}) this process can be carried out anonymously; it relies on information encoded in the CPU during the manufacturing process. The \textit{Provisioning Enclave} assists in this process, especially as production enclaves are required to attest with Intel's provisioning service before executing. Remote attestation is not explicitly required in this project's architecture hence will not be covered in any further detail.
+\paragraph{Remote Attestation} In addition to attestation between entities on the same platform, the Intel specification also provides a workflow for an enclave to attest its identity to a remote party. The system's \textit{Quoting Enclave} verifies an enclave's local \textit{quote} and creates a digital signature of it using the CPU's permanent hardware SGX private key. Through the use of an \textit{Intel Enhanced Privacy Identifier} (\textit{EPID})~\cite{epid} this process can be carried out anonymously; it relies on information encoded in the CPU during the manufacturing process. The \textit{Provisioning Enclave} assists in this process, especially as production enclaves are required to attest with Intel's provisioning service~\cite{sgx-prov-service} before executing. Remote attestation is not explicitly required in this project's architecture hence will not be covered in any further detail.
 
 \subsection{Sealing}
 \label{sec:sealing}
@@ -239,15 +239,14 @@
 
 \subsection{SGX Versions}
 \label{sec:sgx-versions}
-\paragraph{} At the time of writing there are two versions of SGX available, \textit{v1} and \textit{v2} --- the details given here relate to \textit{v1}. \textit{v2} offers a number of improvements, including: (a) dynamic memory management, (b) eased production enclave restrictions (`Flexible Launch Control'), (c) increased PRM size support, and (d) support for virtualisation. This project will accomodate both and thus not rely on any of the aforementioned.
-
+\paragraph{} At the time of writing there are two versions of SGX available, \textit{v1} and \textit{v2} --- the details given here relate to \textit{v1} as this project will be compatible with both. \textit{v2} offers a number of improvements on which this project does not rely, including: (a) dynamic memory management, (b) eased production enclave restrictions (`Flexible Launch Control'), (c) increased PRM size support, and (d) support for virtualisation.
 
 
 % -------------
 
 \section{Aspects of the \textit{Linux} Kernel}
 
-\paragraph{} Linux needs no introduction. First created in 1991 as an open-source alternative to UNIX, it now powers over 90\% of \textit{the cloud} and 85\% of smartphones. With almost 25,000 contributors to the kernel, it is immensely complex, with numerous interlocking parts. This section shall provide a brief overview of a small subset of them to support the information given in §~\ref{sec:design}.
+\paragraph{} Linux needs little introduction. First created in 1991 as an open-source alternative to UNIX, it now powers over 90\% of \textit{the cloud} and 85\% of smartphones. With almost 25,000 contributors to the kernel, it is immensely complex, with numerous interlocking parts. This section shall provide a brief overview of a small subset of them to support the information given in §~\ref{sec:design}.
 
 \subsection{Virtual File System}
 
@@ -255,9 +254,9 @@
 
 \paragraph{Superblocks} The \textit{superblock} attached to an entity represents the characteristics and properties of the filesystem in which it sits. The metadata it holds includes: the block size, statistics on available blocks, the size and location of the filesystem inode tables, the disk block map, and block grouping data. An important marker held in the superblock is it's \textit{magic value}; this predefined code\footnote{Defined in \texttt{include/uapi/linux/magic.h}.} indicates the underlying implementation the filesystem belongs to. Examples include \textit{EXT4} (\texttt{EXT4\_SUPER\_MAGIC}), \textit{pseudo terminal devices} (Linux shells, \texttt{DEVPTS\_SUPER\_MAGIC}), or sockets via \textit{SockFS} (\texttt{SOCKFS\_MAGIC}).
 
-\paragraph{Inodes} The \textit{inode} data structure represents information about a single file existing on a file system. As stated, all objects in Linux are represented by files --- this manifests in the fact that they are \textit{backed} by an inode. No pathname is assigned at this level; this is provided at a higher level of abstraction. An inode does however indicate ownership information, access restrictions and content type, and is identified by its \textit{inode number}.
+\paragraph{Inodes} The \textit{inode} data structure represents information about a single file existing on a file system. All objects, not only files are \textit{backed} by inodes. No pathname is assigned at this level; this is provided at a higher level of abstraction. An inode does however indicate ownership information, access restrictions and content type, and is identified by its \textit{inode number}.
 
-\paragraph{Dentries} Each item in the \textit{direct entry cache} (\textit{dcache}), shortened to \textit{dentry}, represents a connection between an inode and the path they reside at in the VFS. This glue layer is responsible for building the tangible folder structure, and as the name suggests, metadata caching. A \textit{file} consists of a \textit{dentry}-\textit{inode} pair.
+\paragraph{Dentries} Each item in the \textit{direct entry cache} (\textit{dcache}), shortened to \textit{dentry}, represents a connection between an inode and the path it resides at in the VFS. This glue layer is responsible for building the tangible folder structure, and as the name suggests, metadata caching. A \textit{file} consists of a \textit{dentry}-\textit{inode} pair.
 
 \paragraph{File descriptors} Whenever a process opens a file, it is presented with a \textit{file descriptor} by the kernel (via \texttt{open()} or similar). This structure is unique to a process, providing the gateway between the process and the underlying file it describes. All active descriptors can be viewed at \texttt{/proc/<pid>/fd/}; for standard processes \textit{0} globally refers to \textit{stdin}, \textit{1} to \textit{stdout}, and \textit{2} to \textit{stderr}. Reads and writes to a file (or socket, pipe, etc.) are performed on the relevant file descriptor, not the object directly.
 
@@ -284,5 +283,5 @@
 
 \begin{enumerate}
     \item The \textit{HMAC-SHA1} hash of the \texttt{security} namespace is stored as \texttt{security.evm} for reference, and
-    \item A digital signature of this value is stored alongside using a key that is sealed either using a \textit{TPM}\footnote{Trusted Platform Module. TODO more here} or passphrase.
+    \item A digital signature of this value is stored alongside using a key that is sealed either using a \textit{TPM}\footnote{Trusted Platform Module.~\cite{tpm}} or passphrase.
 \end{enumerate}
