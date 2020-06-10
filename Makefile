@@ -25,3 +25,6 @@ clean:
 
 count:
 	@texcount -1 -utf8 -sum -inc dissertation.tex
+
+count-all:
+	@texcount -utf8 -sum -inc dissertation.tex
