@@ -68,7 +68,42 @@
 
 % ---------------
 
+\section{The \textsc{Citadel} IFC Model}
+
+\paragraph{} Before work on the final \textsc{Citadel} implementation began, we constructed a formalisation describing the distributed nature of its design. A model helps reason about safety and correctness of the final system, and provided the notation to properly discuss its features. Our model, which will now be presented, directly extends \textit{CamFlow}'s (§~\ref{sec:ifc-modelling}).
+
+\subsection{Reservations}
+
+\paragraph{} Previously we had defined the concept of a \textit{safe flow}, $A \rightarrow B$, which underpins the heart of our IFC restrictions. In previous works permission to perform an operation is granted while \textit{implicitly} considering \textit{how} to flow is to take place (\ref{eqn:res-1}). An isolated \textit{enforcement} component does not understand the concept of \textit{flows}, forcing a policy decision to be defined \textit{explicitly}; \textsc{Citadel} uses \textit{reservations} for this purpose (\ref{eqn:res-2}). This distinction is simple but very important when introduction \textit{laziness} and other optimisations between the two halves of the reference monitor.
+
+\begin{equation}\label{eqn:res-1}
+    \textit{operation} \rightarrow \boxed{\textit{reference monitor}} \xrightarrow{\;\;\textit{decision}\;\;} \{0,1\}
+\end{equation}
+\vspace{-3mm}
+\begin{equation}\label{eqn:res-2}
+    \textit{operation} \rightarrow \boxed{\textit{policy}\; \xrightarrow{\;\;\textit{reservation}\;\;} \;\textit{enforcement}} \xrightarrow{\;\;\textit{decision}\;\;} \{0,1\}
+\end{equation}
+\vspace{3mm}
+
+\paragraph{} Let us define $\mathcal{R}$, the set of all \textit{reservations}, as follows.
+
+\newcommand{\powerset}{\raisebox{.15\baselineskip}{\Large\ensuremath{\wp}}}
+\vspace{-5mm}
+\begin{equation*}
+    \mathcal{R} = \mathcal{T} \times \powerset(\Omega)
+\end{equation*}
+
+\paragraph{} And further define a shorthand, $t^{\alpha}$;
+\vspace{-3mm}
+\begin{equation*}
+    r \in \mathcal{R} \;.\; r = (t, \alpha) = t^{\alpha} \implies t \in \mathcal{T} \wedge \alpha \subseteq \Omega
+\end{equation*}
+
+\paragraph{} We introduce, for a process $A$, additional state; $A_{r} \subseteq \mathcal{R}$, the set of all reservations is holds. Once a decision has been made it is important for a reference monitor to be able to change it, revoking access if required. Thus we further define a notion of \textit{validity} indicator function, $\mathcal{V}: \mathcal{R} \mapsto \{0,1\}$. A reservation can only be used to obtain access to a resource if it is valid; invalid reservations are deleted.
+
+% ---------------
 \clearpage
+\section{Implementation}
 \begin{figure}[]
     \centering
     \includegraphics[width=\linewidth]{figures/EnclaveLayout.pdf}
