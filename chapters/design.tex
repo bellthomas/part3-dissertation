@@ -13,7 +13,7 @@
     \item \textit{Tamper proof.} To ensure that an attacker cannot disable the access control and authorisation steps mandated by the security policy, the integrity of a reference monitor cannot be in question.
 \end{itemize}
 
-\paragraph{} No computer system is every completely secure, and Linux is no exception. Having grown by a 1.7 million lines of code (LoC) in the past year alone, now standing at 27.8 million LoC in total,\footnote{\url{https://www.theregister.com/2020/01/06/linux\_2020\_kernel\_systemd\_code/}} bugs are inevitable --- almost 2000 have been reported in the past year,\footnote{\url{https://bugzilla.kernel.org/}} and 662 \textit{severe} bugs are still outstanding.\footnote{\url{https://www.cvedetails.com/product/47/Linux-Linux-Kernel.html}} In this context we must question whether Linux alone can provide a reference monitor implementation the guarantees it requires,~\cite{Lipp2018MeltdownRK, 10.5555/2831143.2831164} thus motivating the use of SGX.
+\paragraph{} No computer system is every completely secure, and Linux is no exception. Having grown by a 1.7 million lines of code (LoC) in the past year alone, to stand at 27.8 million LoC in total,\footnote{\url{https://www.theregister.com/2020/01/06/linux\_2020\_kernel\_systemd\_code/}} bugs are inevitable --- almost 2000 have been reported in the past year,\footnote{\url{https://bugzilla.kernel.org/}} and 662 \textit{severe} bugs are still outstanding.\footnote{\url{https://www.cvedetails.com/product/47/Linux-Linux-Kernel.html}} In this context we must question whether Linux alone can provide a reference monitor implementation the guarantees it requires,~\cite{Lipp2018MeltdownRK, 10.5555/2831143.2831164} thus motivating the use of SGX.
 
 \paragraph{} Applying SGX to this problem brings two attractive benefits;
 \begin{itemize}
@@ -57,8 +57,16 @@
 
 \paragraph{}\textit{Architecture 1} can be implemented without changing the base IFC model presented in §~\ref{sec:ifc-modelling}, easing potential concerns regarding correctness and safety. However it adds significant overhead to the critical sections~\cite{Dubois1988SynchronizationCA} of core LSM functions, in most cases while the kernel holds locks for various objects being accessed.
 
-\paragraph{} \textit{Architecture 2} is more flexible, requiring all negotiation be conducted ahead of time, importantly without leaving userspace: any overhead only impacts the application, leaving the kernel's critical sections to execute with minimal interference. A notable downside, however, is that the system's security model will need to be extended to accommodate the fact that \textit{policy decisions and enforcement are no longer one and the same}.
+\paragraph{} \textit{Architecture 2} is more flexible, requiring all negotiation be conducted ahead of time, and importantly, without leaving userspace: any overhead only impacts the application, leaving the kernel's critical sections to execute with minimal interference. A notable downside, however, is that the system's security model will need to be extended to accommodate the fact that \textit{policy decisions and enforcement are no longer one and the same}.
 
+\paragraph{} Preliminary experiments showed that the performance of the two architectures were similar in light workloads, but \textit{Architecture 1} degrades significantly in the presence of any resource contention. Additionally, as will be explained in §~0.0, the dependence on a kernel module conflicts with the desired constrained TCB of the system. For these reasons \textit{Architecture 2} was chosen for the remainder of development.
+
+\paragraph{} An additional challenge is one of incomplete information --- the enclave will not be privy to the internal kernel datastructures such as \texttt{task\_struct}, which will be used for storing the taint and capabilities of processes. A potential solution would be to implement a request---response model via a custom kernel interface, though the performance impact would be severe, requiring additional context switches. The approach adopted instead (§~0.0) uses inference based on the partial information an enclave has. Any solution must be trustworthy and safe, and malicious entities must not be able to exploit any \textit{eventually consistent} components.~\cite{10.1145/1435417.1435432}
+
+\paragraph{} As a final comment, it must be noted that SGX is not without its flaws; §~5.X discusses this and its impact on the project.
+
+
+% ---------------
 
 \clearpage
 \begin{figure}[]
@@ -67,3 +75,5 @@
     \caption{Abstract overview of an SGX enclave's protections.}
     \label{fig:sgx-basic}
 \end{figure}
+
+
