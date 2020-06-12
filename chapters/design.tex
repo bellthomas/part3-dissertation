@@ -85,7 +85,7 @@
 \end{equation}
 \vspace{3mm}
 
-\paragraph{} Let us define $\mathcal{R}$, the set of all \textit{reservations}, as follows.
+\paragraph{} Let $\Omega$ be the set of all operations mediated by the reference monitor, for example \texttt{file\_read} or \texttt{socket\_open}. Also, let us define $\mathcal{R}$, the set of all \textit{reservations}, as follows.
 
 \newcommand{\powerset}{\raisebox{.15\baselineskip}{\Large\ensuremath{\wp}}}
 \vspace{-5mm}
@@ -99,7 +99,9 @@
     r \in \mathcal{R} \;.\; r = (t, \alpha) = t^{\alpha} \implies t \in \mathcal{T} \wedge \alpha \subseteq \Omega
 \end{equation*}
 
-\paragraph{} We introduce, for a process $A$, additional state; $A_{r} \subseteq \mathcal{R}$, the set of all reservations is holds. Once a decision has been made it is important for a reference monitor to be able to change it, revoking access if required. Thus we further define a notion of \textit{validity} indicator function, $\mathcal{V}: \mathcal{R} \mapsto \{0,1\}$. A reservation can only be used to obtain access to a resource if it is valid; invalid reservations are deleted.
+\paragraph{} We introduce, for a process $A$, additional state; $A_{r} \subseteq \mathcal{R}$, the set of all reservations it holds. Once a decision has been made, it is important for a reference monitor to be able to change it, revoking access if required. Thus we further define a notion of \textit{validity} with an indicator function, $\mathcal{V}: \mathcal{R} \mapsto \{0,1\}$. A reservation can only be used to obtain access to a resource if it is valid; invalid reservations are deleted.
+
+\subsection{Permissible Operations}
 
 % ---------------
 \clearpage
