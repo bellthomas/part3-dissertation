@@ -25,13 +25,20 @@
 
 
 %\usepackage[dvips]{epsfig,graphics} 
-\usepackage{epsfig,graphicx,verbatim,parskip,tabularx,setspace,xspace,geometry,amssymb,mathtools,url,hyperref,xcolor}
+\usepackage{epsfig,graphicx,verbatim,parskip,tabularx,setspace,xspace,geometry,amssymb,mathtools,url,hyperref,xcolor,relsize}
 \usepackage[tt=false]{libertine}
 \usepackage{multirow}
 \usepackage{minted}
 \usepackage[mathscr]{euscript}
 
-
+% Special preorder symbol.
+\newcommand{\sprecsim}{\kern0.5ex\vcenter{\hbox{\scalebox{0.75}{$\textstyle\precsim\,$}}}\kern0.5ex}
+\newcommand{\sqin}{%
+  \mathrel{\vphantom{\sqsubset}\text{%
+    \mathsurround=0pt
+    \ooalign{$\sqsubset$\cr$-$\cr}%
+  }}%
+}
 %% START OF DOCUMENT
 \begin{document}
 

@@ -40,7 +40,7 @@
 \paragraph{} Two architectures, as illustrated in Figure~\ref{fig:sgx-integration}, were initially considered. 
 
 \begin{enumerate}
-    \item An \textit{isolated} extension of the LSM. Only the security implementation communicates with the \textit{policy} enclave, acting as a na\"{i}ve reimplementation of a fully self-contained LSM using an additional kernel module as a I/O relay.
+    \item An \textit{isolated} extension of the LSM. Only the security implementation communicates with the \textit{policy} enclave, acting as a na\"{i}ve reimplementation of a fully self-contained LSM using an additional kernel module as an I/O relay.
     \item An \textit{integrated} userspace service, through which permission is \textit{requested} ahead of time and decisions stored in the LSM before being needed. Back flow of information is facilitated asynchronously, but an additional kernel relay is not required.
 \end{enumerate}
 
@@ -70,11 +70,11 @@
 
 \section{The \textsc{Citadel} IFC Model}
 
-\paragraph{} Before work on the final \textsc{Citadel} implementation began, we constructed a formalisation describing the distributed nature of its design. A model helps reason about safety and correctness of the final system, and provided the notation to properly discuss its features. Our model, which will now be presented, directly extends \textit{CamFlow}'s (§~\ref{sec:ifc-modelling}).
+\paragraph{} Before work on the final \textsc{Citadel} implementation began, we constructed a formalisation describing the distributed nature of its design. A model helps reason about the safety and correctness of the final system, and provides the notation to properly discuss its features. Our model, which will now be presented, directly extends the one presented in §~\ref{sec:ifc-modelling}.
 
 \subsection{Reservations}
 
-\paragraph{} Previously we had defined the concept of a \textit{safe flow}, $A \rightarrow B$, which underpins the heart of our IFC restrictions. In previous works permission to perform an operation is granted while \textit{implicitly} considering \textit{how} to flow is to take place (\ref{eqn:res-1}). An isolated \textit{enforcement} component does not understand the concept of \textit{flows}, forcing a policy decision to be defined \textit{explicitly}; \textsc{Citadel} uses \textit{reservations} for this purpose (\ref{eqn:res-2}). This distinction is simple but very important when introduction \textit{laziness} and other optimisations between the two halves of the reference monitor.
+\paragraph{} Previously we had defined the concept of a \textit{safe flow}, $A \rightarrow B$, which underpins the heart of our IFC restrictions. In previous works permission to perform an operation is granted while \textit{implicitly} considering \textit{how} the flow is to take place (\ref{eqn:res-1}). An isolated \textit{enforcement} component does not understand the concept of \textit{flows}, forcing policy decisions to be defined \textit{explicitly}; \textsc{Citadel} uses \textit{reservations} for this purpose (\ref{eqn:res-2}). This distinction is simple but very important when introducing \textit{laziness} and other optimisations between the two halves of the reference monitor.
 
 \begin{equation}\label{eqn:res-1}
     \textit{operation} \rightarrow \boxed{\textit{reference monitor}} \xrightarrow{\;\;\textit{decision}\;\;} \{0,1\}
@@ -82,26 +82,55 @@
 \vspace{-3mm}
 \begin{equation}\label{eqn:res-2}
     \textit{operation} \rightarrow \boxed{\textit{policy}\; \xrightarrow{\;\;\textit{reservation}\;\;} \;\textit{enforcement}} \xrightarrow{\;\;\textit{decision}\;\;} \{0,1\}
+    \vspace{3mm}
 \end{equation}
-\vspace{3mm}
 
-\paragraph{} Let $\Omega$ be the set of all operations mediated by the reference monitor, for example \texttt{file\_read} or \texttt{socket\_open}. Also, let us define $\mathcal{R}$, the set of all \textit{reservations}, as follows.
+
+\paragraph{} Let $\Omega$ be the set of all operations mediated by the reference monitor, for example \texttt{file\_read} or \texttt{socket\_open}. Also, let us define $\mathcal{R}$, the set of all \textit{reservations}, as follows.\footnote{Recalling that $\mathcal{T}$ is the set of all tags.}
 
 \newcommand{\powerset}{\raisebox{.15\baselineskip}{\Large\ensuremath{\wp}}}
 \vspace{-5mm}
 \begin{equation*}
     \mathcal{R} = \mathcal{T} \times \powerset(\Omega)
+    \vspace{2mm}
 \end{equation*}
 
-\paragraph{} And further define a shorthand, $t^{\alpha}$;
+\paragraph{} Further, we define a shorthand, $t^{\alpha}$;
 \vspace{-3mm}
 \begin{equation*}
-    r \in \mathcal{R} \;.\; r = (t, \alpha) = t^{\alpha} \implies t \in \mathcal{T} \wedge \alpha \subseteq \Omega
+    r \in \mathcal{R} \;.\; (r = (t, \alpha) = t^{\alpha} \implies t \in \mathcal{T} \; \wedge \; \alpha \subseteq \Omega)
 \end{equation*}
 
-\paragraph{} We introduce, for a process $A$, additional state; $A_{r} \subseteq \mathcal{R}$, the set of all reservations it holds. Once a decision has been made, it is important for a reference monitor to be able to change it, revoking access if required. Thus we further define a notion of \textit{validity} with an indicator function, $\mathcal{V}: \mathcal{R} \mapsto \{0,1\}$. A reservation can only be used to obtain access to a resource if it is valid; invalid reservations are deleted.
+\paragraph{} We introduce, for a process $A$, additional state; $A_{r} \subseteq \mathcal{R}$, the set of all reservations it holds. Once a decision has been made, it is important for a reference monitor to be able to change it, revoking access if required. Thus we specify a notion of \textit{validity} with an indicator function, $\mathcal{V}: \mathcal{R} \mapsto \{0,1\}$. A reservation can only be used to obtain access to a resource if it is valid; invalid reservations are deleted.
 
 \subsection{Permissible Operations}
+
+\paragraph{Satisfiability} To determine whether an operation may be permitted, the \textit{constraint reservation} representing it is compared against reservations held by the process. As an example, $t^{\{\texttt{file\_read}\}}$ is the constraint for reading a file tagged with $t$.
+
+\paragraph{} A constraint $\tau^{x}$ is said to be satisfied by a reservation $\tau^{y}$ ($\tau^{x} \sprecsim \tau^{y}$) if the tags match and $y$ permits \textit{at least} the same form of access (\ref{eqn:satis-1}). Equations (\ref{eqn:satis-2}) and (\ref{eqn:satis-3}) define set comparison counterparts --- constraint $\tau^{x}$ is satisfied by a set of reservations $y$ ($\tau^{x} \sqin y$), and a set of constraints $\mu$ is satisfied by a set of reservations $\nu$ ($\mu \sqsubseteq \nu$).
+
+\vspace{-5mm}
+\begin{align}
+    \sigma^{\alpha}, \tau^{\beta} \in \mathcal{R} &\;.\; (\; \sigma^{\alpha} \sprecsim \tau^{\beta} \iff \sigma = \tau \;\wedge\; \alpha \subseteq \beta \;) \label{eqn:satis-1}\\
+    \sigma^{\alpha} \in \mathcal{R}, \; x \subseteq \mathcal{R} &\;.\;  (\; \sigma^{\alpha} \sqin x \iff \exists \, \tau^{\beta} \in x \;.\; \sigma^{\alpha} \sprecsim \tau^{\beta} \;) \label{eqn:satis-2}\\
+    \mu, \nu \subseteq \mathcal{R} &\;.\;  (\; \mu \sqsubseteq \nu \iff \forall \, \alpha \in \mu \;.\; \alpha \sqin \nu \;) \label{eqn:satis-3}
+\end{align}
+
+\paragraph{} From this we can define a \textit{permissible operation}, $A \xrightharpoonup{\;\omega\;} t$, meaning process $A$ may perform operations $\omega$ on an entity tagged with $t$. An operation is only permissible if the process holds a reservation explicitly granting permission (\ref{eqn:permissible-op}).
+\begin{equation}
+    \label{eqn:permissible-op}
+    A \xrightharpoonup{\;\omega\;} t \iff (\exists \; t^{\alpha} \in A_r \implies t^{\omega} \sprecsim t^{\alpha})
+\end{equation}
+
+\paragraph{} To bridge the gap between permissible flows and operations, a final definition is required; a \textit{specific permissible flow}, $A \,\xmapsto{\;\omega,\tau\;}\, B$, meaning that $A$ may send information to $B$ using operations $\omega$, via entities tagged with $\tau$. Two natural statements fall out from these definitions;
+
+\vspace{-5mm}
+\begin{align}
+    (\exists\, \omega,\tau \;.\; A \,\xmapsto{\;\omega,\tau\;}\, B) \implies & A \rightarrow B \\
+    A \,\xmapsto{\;\omega,\tau\;}\, B \implies & A \xrightharpoonup{\omega} \tau \label{eqn:flow-abs-conc-map}
+\end{align}
+
+\paragraph{} These are particularly notable as they define the relationship between an abstract policy space ($A \rightarrow B$) and concrete implementation ($A \xrightharpoonup{\omega} \tau$).
 
 % ---------------
 \clearpage
