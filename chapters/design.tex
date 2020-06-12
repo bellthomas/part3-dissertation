@@ -31,9 +31,9 @@
     \label{fig:sgx-abstract-integration}
 \end{figure}
 
-\paragraph{} The natural location for a reference monitor is embedded directly in the kernel, in the path of \textit{syscalls'} control flows --- this is provided by the LSM framework. \textit{CamFlow} does exactly this, silently tagging processes and other entities as they are encountered by the kernel, additionally providing an external LSM-interface for any active changes. However, as explained in §~\ref{sec:sgx-no-kernel-mode}, an SGX enclave is incompatible with this workflow as it cannot execute alongside kernel code. Thus a major, unavoidable consequence of this is that the reference monitor must be distributed across rings 0 and 3 --- an enclave \textit{policy} component, and an LSM for \textit{enforcement}.
+\paragraph{} The natural location for a reference monitor is embedded directly in the kernel, in the path of \textit{syscalls'} control flows --- this is provided by the LSM framework. \textit{CamFlow} does exactly this, silently tagging processes and other entities as they are encountered by the kernel, additionally providing an external LSM-interface for any active changes. An SGX enclave is incompatible with this workflow however (§~\ref{sec:sgx-no-kernel-mode}), as it cannot execute alongside kernel code. Thus a major, unavoidable design decision is that the reference monitor must be distributed across rings 0 and 3 --- an enclave \textit{policy} component, and an LSM for \textit{enforcement}.
 
-\paragraph{} The disruption this change causes could have the potential to severely impact performance; Figure~\ref{fig:sgx-abstract-integration} highlights the significant change to overall control flow. Mostly notably, externalising part of the LSM to an enclave forces an additional pair of context switches for each \textit{syscall}.
+\paragraph{} The disruption this change causes could have the potential to severely impact performance; Figure~\ref{fig:sgx-abstract-integration} highlights the significant change to overall control flow. Most notably, externalising part of the LSM to an enclave forces, in the worst case, an additional pair of context switches for each \textit{syscall}.
 
 \paragraph{} Given a ring-3 component is unavoidable, the question becomes how to minimise the overhead caused by its integration, all while maintaining \textit{safety} (every operation must be mediated). This problem is reminiscent of the ones that inspired the development of \textit{exokernels}~\cite{10.1145/224056.224076} --- both the drawbacks and opportunities of those approaches apply here.~\cite{10.1145/269005.266644} \textcolor{red}{More detail about why.}
 
@@ -41,7 +41,7 @@
 
 \begin{enumerate}
     \item An \textit{isolated} extension of the LSM. Only the security implementation communicates with the \textit{policy} enclave, acting as a na\"{i}ve reimplementation of a fully self-contained LSM using an additional kernel module as a I/O relay.
-    \item An \textit{integrated} userspace service, through which permission is \textit{requested} ahead of time and decisions stored in the LSM before being claimed. Back flow of information is facilitated asynchronously, but an additional kernel relay is not required.
+    \item An \textit{integrated} userspace service, through which permission is \textit{requested} ahead of time and decisions stored in the LSM before being needed. Back flow of information is facilitated asynchronously, but an additional kernel relay is not required.
 \end{enumerate}
 
 
@@ -61,7 +61,7 @@
 
 \paragraph{} Preliminary experiments showed that the performance of the two architectures were similar in light workloads, but \textit{Architecture 1} degrades significantly in the presence of any resource contention. Additionally, as will be explained in §~0.0, the dependence on a kernel module conflicts with the desired constrained TCB of the system. For these reasons \textit{Architecture 2} was chosen for the remainder of development.
 
-\paragraph{} An additional challenge is one of incomplete information --- the enclave will not be privy to the internal kernel datastructures such as \texttt{task\_struct}, which will be used for storing the taint and capabilities of processes. A potential solution would be to implement a request---response model via a custom kernel interface, though the performance impact would be severe, requiring additional context switches. The approach adopted instead (§~0.0) uses inference based on the partial information an enclave has. Any solution must be trustworthy and safe, and malicious entities must not be able to exploit any \textit{eventually consistent} components.~\cite{10.1145/1435417.1435432}
+\paragraph{} An additional challenge is one of incomplete information --- the enclave will not be privy to internal kernel datastructures such as \texttt{task\_struct}, which will store the taint and capabilities of processes. A potential solution would be to implement a request---response model via a custom kernel interface for any queries, though the performance impact would be severe, requiring additional context switches. The approach adopted instead (§~0.0) uses inference based on partial information an enclave has. Any solution must be trustworthy and safe, and malicious entities must not be able to exploit any \textit{eventually consistent} components.~\cite{10.1145/1435417.1435432}
 
 \paragraph{} As a final comment, it must be noted that SGX is not without its flaws; §~5.X discusses this and its impact on the project.
 
