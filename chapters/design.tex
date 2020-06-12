@@ -13,7 +13,7 @@
     \item \textit{Tamper proof.} To ensure that an attacker cannot disable the access control and authorisation steps mandated by the security policy, the integrity of a reference monitor cannot be in question.
 \end{itemize}
 
-\paragraph{} No computer system is every completely secure, and Linux is no exception. Having grown by a 1.7 million lines of code (LoC) in the past year alone, to stand at 27.8 million LoC in total,\footnote{\url{https://www.theregister.com/2020/01/06/linux\_2020\_kernel\_systemd\_code/}} bugs are inevitable --- almost 2000 have been reported in the past year,\footnote{\url{https://bugzilla.kernel.org/}} and 662 \textit{severe} bugs are still outstanding.\footnote{\url{https://www.cvedetails.com/product/47/Linux-Linux-Kernel.html}} In this context we must question whether Linux alone can provide a reference monitor implementation the guarantees it requires,~\cite{Lipp2018MeltdownRK, 10.5555/2831143.2831164} thus motivating the use of SGX.
+\paragraph{} No computer system is ever completely secure, and Linux is no exception. Having grown by a 1.7 million lines of code (LoC) in the past year alone, to stand at 27.8 million LoC in total,\footnote{\url{https://www.theregister.com/2020/01/06/linux\_2020\_kernel\_systemd\_code/}} bugs are inevitable --- almost 2000 have been reported in the past year,\footnote{\url{https://bugzilla.kernel.org/}} and 662 \textit{severe} bugs are still outstanding.\footnote{\url{https://www.cvedetails.com/product/47/Linux-Linux-Kernel.html}} In this context we must question whether Linux alone can provide a reference monitor implementation the guarantees it requires,~\cite{Lipp2018MeltdownRK, 10.5555/2831143.2831164} thus motivating the use of SGX.
 
 \paragraph{} Applying SGX to this problem brings two attractive benefits;
 \begin{itemize}
@@ -86,10 +86,10 @@
 \end{equation}
 
 
-\paragraph{} Let $\Omega$ be the set of all operations mediated by the reference monitor, for example \texttt{file\_read} or \texttt{socket\_open}. Also, let us define $\mathcal{R}$, the set of all \textit{reservations}, as follows.\footnote{Recalling that $\mathcal{T}$ is the set of all tags.}
+\paragraph{} Let $\Omega$ be the set of all operations mediated by the reference monitor, including, for example, \texttt{file\_read} or \texttt{socket\_open}. Also, let us define $\mathcal{R}$, the set of all \textit{reservations}, as follows.\footnote{Recalling that $\mathcal{T}$ is the set of all tags.}
 
 \newcommand{\powerset}{\raisebox{.15\baselineskip}{\Large\ensuremath{\wp}}}
-\vspace{-5mm}
+\vspace{-7mm}
 \begin{equation*}
     \mathcal{R} = \mathcal{T} \times \powerset(\Omega)
     \vspace{2mm}
@@ -107,16 +107,16 @@
 
 \paragraph{Satisfiability} To determine whether an operation may be permitted, the \textit{constraint reservation} representing it is compared against reservations held by the process. As an example, $t^{\{\texttt{file\_read}\}}$ is the constraint for reading a file tagged with $t$.
 
-\paragraph{} A constraint $\tau^{x}$ is said to be satisfied by a reservation $\tau^{y}$ ($\tau^{x} \sprecsim \tau^{y}$) if the tags match and $y$ permits \textit{at least} the same form of access (\ref{eqn:satis-1}). Equations (\ref{eqn:satis-2}) and (\ref{eqn:satis-3}) define set comparison counterparts --- constraint $\tau^{x}$ is satisfied by a set of reservations $y$ ($\tau^{x} \sqin y$), and a set of constraints $\mu$ is satisfied by a set of reservations $\nu$ ($\mu \sqsubseteq \nu$).
+\paragraph{} A constraint $\tau^{x}$ is said to be satisfied by a reservation $\tau^{y}$ ($\tau^{x} \sprecsim \tau^{y}$) if the tags match, the reservation is valid, and $y$ permits \textit{at least} the required form of access (\ref{eqn:satis-1}). Equations (\ref{eqn:satis-2}) and (\ref{eqn:satis-3}) define set comparison counterparts --- constraint $\tau^{x}$ is satisfied by a set of reservations $y$ ($\tau^{x} \sqin y$), and a set of constraints $\mu$ is satisfied by a set of reservations $\nu$ ($\mu \sqsubseteq \nu$).
 
 \vspace{-5mm}
 \begin{align}
-    \sigma^{\alpha}, \tau^{\beta} \in \mathcal{R} &\;.\; (\; \sigma^{\alpha} \sprecsim \tau^{\beta} \iff \sigma = \tau \;\wedge\; \alpha \subseteq \beta \;) \label{eqn:satis-1}\\
+    \sigma^{\alpha}, \tau^{\beta} \in \mathcal{R} &\;.\; (\; \sigma^{\alpha} \sprecsim \tau^{\beta} \iff \sigma = \tau \;\wedge\; \alpha \subseteq \beta \;\wedge\; \mathcal{V}(\tau^{\beta}) \;) \label{eqn:satis-1}\\
     \sigma^{\alpha} \in \mathcal{R}, \; x \subseteq \mathcal{R} &\;.\;  (\; \sigma^{\alpha} \sqin x \iff \exists \, \tau^{\beta} \in x \;.\; \sigma^{\alpha} \sprecsim \tau^{\beta} \;) \label{eqn:satis-2}\\
     \mu, \nu \subseteq \mathcal{R} &\;.\;  (\; \mu \sqsubseteq \nu \iff \forall \, \alpha \in \mu \;.\; \alpha \sqin \nu \;) \label{eqn:satis-3}
 \end{align}
 
-\paragraph{} From this we can define a \textit{permissible operation}, $A \xrightharpoonup{\;\omega\;} t$, meaning process $A$ may perform operations $\omega$ on an entity tagged with $t$. An operation is only permissible if the process holds a reservation explicitly granting permission (\ref{eqn:permissible-op}).
+\paragraph{} From here we define a \textit{permissible operation}, $A \xrightharpoonup{\;\omega\;} t$; process $A$ may perform operations $\omega$ on an entity tagged with $t$. An operation is only permissible if the process holds a reservation explicitly granting permission (\ref{eqn:permissible-op}).
 \begin{equation}
     \label{eqn:permissible-op}
     A \xrightharpoonup{\;\omega\;} t \iff (\exists \; t^{\alpha} \in A_r \implies t^{\omega} \sprecsim t^{\alpha})
@@ -124,17 +124,44 @@
 
 \paragraph{} To bridge the gap between permissible flows and operations, a final definition is required; a \textit{specific permissible flow}, $A \,\xmapsto{\;\omega,\tau\;}\, B$, meaning that $A$ may send information to $B$ using operations $\omega$, via entities tagged with $\tau$. Two natural statements fall out from these definitions;
 
-\vspace{-5mm}
+\vspace{-7mm}
 \begin{align}
     (\exists\, \omega,\tau \;.\; A \,\xmapsto{\;\omega,\tau\;}\, B) \implies & A \rightarrow B \\
-    A \,\xmapsto{\;\omega,\tau\;}\, B \implies & A \xrightharpoonup{\omega} \tau \label{eqn:flow-abs-conc-map}
+    A \,\xmapsto{\;\omega,\tau\;}\, B \implies & A \xrightharpoonup{\;\omega\;} \tau \label{eqn:flow-abs-conc-map}
 \end{align}
 
-\paragraph{} These are particularly notable as they define the relationship between an abstract policy space ($A \rightarrow B$) and concrete implementation ($A \xrightharpoonup{\omega} \tau$).
+\paragraph{} Together, these define the relationship between an abstract policy space ($A \rightarrow B$) and concrete implementation ($A \xrightharpoonup{\;\omega\;} \tau$).
+
+\paragraph{} A handful of small updates are required to make the existing rules consistent with the new: reservations are not transferred when creating a new entity (\ref{eqn:new-creation}), and reservations are not affected by capabilities as they represent a centralised component of the DIFC system. 
+
+\vspace{-5mm}
+\begin{equation}
+    A \Rightarrow B \implies A_s = B_s \; \wedge \; A_i = B_i \; \wedge \; B_r = \varnothing \label{eqn:new-creation}
+\end{equation}
 
 % ---------------
 \clearpage
 \section{Implementation}
+
+\paragraph{} \textsc{Citadel} consists of three components; an LSM, \texttt{citadeld}, and \texttt{libcitadel}. Each plays an essential, symbiotic role in the operation of the reference monitor. This section shall exactly detail the responsibilities of each and how they interact.
+
+\begin{figure}[]
+    \centering
+    \includegraphics[width=\linewidth]{figures/OverallArchitecture.pdf}
+    \caption{Abstract overview of an SGX enclave's protections.}
+    \label{fig:sgx-basic}
+\end{figure}
+
+\subsection{Workflow and Communication}
+\subsection{LSM}
+\subsection{\texttt{citadeld}}
+\subsubsection{\texttt{libtomcrypt}}
+\subsection{Initialisation}
+\subsection{\texttt{libcitadel}}
+
+
+
+\clearpage
 \begin{figure}[]
     \centering
     \includegraphics[width=\linewidth]{figures/EnclaveLayout.pdf}
