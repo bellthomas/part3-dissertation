@@ -3,7 +3,7 @@
 \paragraph{} In this chapter we shall introduce and detail a prototype implementation of a modular, SGX-protected \textit{reference monitor} --- \textsc{Citadel}. First, its necessity will be motivated, and the challenges faced discussed. Then, the three-part architecture will be explained, relating various design decisions to the DIFC model it provides. A discussion about the architecture's performance and effectiveness is provided in §~\ref{sec:eval}.
 
 \section{Motivation}
-\paragraph{} Since its introduction in a 1972 report from Anderson~\cite{reference-monitor}, the reference monitor concept has time and again proved to be a reliable workhorse for a plethora of security models. It does not refer to any exact policy, nor limit itself to any particular implementation --- it's abstractness is one of its greatest strengths, reserving any judgement about what policy is \textit{appropriate} in a particular setting.~\cite{irvine-rm}
+\paragraph{} Since its introduction in a 1972 report from Anderson,~\cite{reference-monitor} the reference monitor concept has time and again proved to be a reliable workhorse for a plethora of security models. It does not refer to any exact policy, nor limit itself to any particular implementation --- it's abstractness is one of its greatest strengths, reserving any judgement about what policy is \textit{appropriate} in a particular setting.~\cite{irvine-rm}
 
 \paragraph{Fundamental Properties of a Reference Monitor}
 
@@ -146,7 +146,7 @@
 
 \paragraph{} \textsc{Citadel} consists of three components; an LSM, \texttt{citadeld}, and \texttt{libcitadel}. Each plays an essential, symbiotic role in the operation of the reference monitor. This section shall present these in the context of \textsc{Citadel}'s architecture, guided by Figure~\ref{fig:citadel-overview}.
 
-\paragraph{Analogy} The system is well modelled as the \textit{will-call} system used by theatres and the like --- clients (\textit{processes}) reserve tickets (\textit{permission}) to attend a show (\textit{perform an operation}) ahead of time via phone or the internet (\texttt{citadeld}), but only receive their tickets (\textit{reservations}) at the venue (\textit{LSM}) on the day (\textit{at the point of execution}).
+\paragraph{Analogy} The system is well modelled by the \textit{will-call} system used by theatres and the like --- clients (\textit{processes}) reserve tickets (\textit{permission}) to attend a show (\textit{perform an operation}) ahead of time via phone or the internet (\texttt{citadeld}), but only receive their tickets (\textit{reservations}) at the venue (\textit{LSM}) on the day (\textit{at the point of execution}).
 
 \paragraph{} \textsc{Citadel}'s ring-0 components comprise its \textit{enforcement domain} (§~\ref{sec:enforcement-domain}), and ring-3 components its \textit{policy domain} (§~\ref{sec:policy-domain}). The enforcement domain is \textit{policy-agnostic}, implementing an abstract, tagged taint tracking system that exposes decision points to policy influence via reservations. In contrast, policy components need not be aware of the exact enforcement strategy to successfully express their protection schemes. Communication between the two domains is discussed separately in §~\ref{sec:interdomain-comms}.
 
@@ -182,14 +182,18 @@
     \item[---] \textbf{Passive}. There are many forms of passive entity, the most prevalent being files and other inode-backed structures. These carry \textit{taint}, an \textit{identifier} (tag), and an \textit{anonymous flag}. Inode tracking is detailed first, with other types of passive entities, such as shared memory, discussed in §~4.X. 
 \end{enumerate}
 
-\paragraph{Identifiers} Entities may be tagged with a single identifier; this corresponds to a tag in the IFC model, and are randomly assigned 128-bit numbers. If a security policy wishes to maintain pseudonyms for secrecy and integrity, for example, it may internally, but must convert back to the system tag for enforcement.
+\subsubsection{Identifiers}
+\paragraph{} Entities may be tagged with a single identifier; this corresponds to a tag in the IFC model, and are randomly assigned 128-bit numbers. If a security policy wishes to maintain pseudonyms for secrecy and integrity, for example, it may internally, but must convert back to the system tag for enforcement.
 
-\paragraph{Extended Attributes} An inode-backed entity's taint flag and identifier are copied to \textit{xattrs} attached to it via the VFS. These occupy the \texttt{security.citadel} namespace, and are essential for ensuring that taints and identifiers persist between boots. Certain entities may be \textit{anonymous}, as indicated by their anonymous flag, meaning that their identifier is not present as an \textit{xattr}. This may either be because the entity does not support \textit{xattrs} (such as files created using \texttt{pipe()}) or that the identifier is temporary.\footnote{Talk about and link to creation flows.}
+\subsubsection{Extended Attributes} 
+\paragraph{} An inode-backed entity's taint flag and identifier are copied to \textit{xattrs} attached to it via the VFS. These occupy the \texttt{security.citadel} namespace, and are essential for ensuring that taints and identifiers persist between boots. Certain entities may be \textit{anonymous}, as indicated by their anonymous flag, meaning that their identifier is not present as an \textit{xattr}. This may either be because the entity does not support \textit{xattrs} (such as files created using \texttt{pipe()}, §~4.X) or that the identifier is temporary.\footnote{Talk about and link to creation flows.}
 
 
-\paragraph{Permissions} Tainted processes must hold a valid reservation in their reservation list to perform any operation that may allow data to flow to another entity; the code for this check is attached in Appendix X for reference, but strictly follows the formal rules presented in §~\ref{sec:permissible-operations}. Untainted processes bypass all checks; the security implications of this are discussed in §~4.X.
+\subsubsection{Permissions} 
+\paragraph{} Tainted processes must hold a valid reservation in their reservation list to perform any operation that may allow data to flow to another entity; the code for this check is attached in Appendix X for reference, but strictly follows the formal rules presented in §~\ref{sec:permissible-operations}. Untainted processes bypass all checks; the security implications of this are discussed in §~4.X.
 
-\paragraph{Reservation Cache} When the system's policy components present a new reservation to the LSM, it is stored in a structure called the \textit{reservation cache}. Implemented as a red-black tree, it maps a process's identifier to a linked list of its pending reservations. This intermediary storage is necessary as LSMs are event-driven, thus can only access entities state when they are presented for review. Before a permission check is carried out, the LSM ensures that the process's reservation list is up to date by;
+\subsubsection{Reservation Cache} 
+\paragraph{} When the system's policy domain presents a new reservation to the LSM, it is stored in a structure called the \textit{reservation cache}. Implemented as a red-black tree, it maps a process's identifier to a linked list of its pending reservations. This intermediary storage is necessary as LSMs are event-driven, and thus can only access an entity's state when it is presented for review. Before a permission check is carried out, the LSM ensures that the process's reservation list is up to date by;
 \begin{enumerate}
     \item \textit{Installing pending tickets}. All reservations held for the process are moved to its internal reservation list, ready for inspection.
     \item \textit{Disposing of expired entries}. The validity function the LSM uses is time-based. When a reservation is inserted into the reservation cache, it is timestamped with an explicit expiry date --- this lifetime is $15$ seconds by default.  
