@@ -130,7 +130,7 @@
     A \,\xmapsto{\;\omega,\tau\;}\, B \implies & A \xrightharpoonup{\;\omega\;} \tau \label{eqn:flow-abs-conc-map}
 \end{align}
 
-\paragraph{} Together, these define the relationship between an abstract policy space ($A \rightarrow B$) and concrete implementation ($A \xrightharpoonup{\;\omega\;} \tau$).
+\paragraph{} Together, these define the relationship between an abstract policy space ($A \rightarrow B$, §~\ref{sec:policy-domain}) and concrete implementation ($A \xrightharpoonup{\;\omega\;} \tau$, §~\ref{sec:enforcement-domain}).
 
 \paragraph{} A handful of small updates are required to make the existing rules consistent with the new: reservations are not transferred when creating a new entity (\ref{eqn:new-creation}), and reservations are not affected by capabilities as they represent a centralised component of the DIFC system. 
 
@@ -143,25 +143,51 @@
 \clearpage
 \section{Implementation}
 
-\paragraph{} \textsc{Citadel} consists of three components; an LSM, \texttt{citadeld}, and \texttt{libcitadel}. Each plays an essential, symbiotic role in the operation of the reference monitor. This section shall exactly detail the responsibilities of each and how they interact.
+\paragraph{} \textsc{Citadel} consists of three components; an LSM, \texttt{citadeld}, and \texttt{libcitadel}. Each plays an essential, symbiotic role in the operation of the reference monitor. This section shall present these in the context of \textsc{Citadel}'s architecture, guided by Figure~\ref{fig:citadel-overview}.
+
+\paragraph{Analogy} The system is well modelled as the \textit{will-call} system used by theatres and the like --- clients (\textit{processes}) reserve tickets (\textit{permission}) to attend a show (\textit{perform an operation}) ahead of time via phone or the internet (\texttt{citadeld}), but only receive their tickets (\textit{reservations}) at the venue (\textit{LSM}) on the day (\textit{at the point of execution}).
+
+\paragraph{} \textsc{Citadel}'s ring-0 components comprise its \textit{enforcement domain} (§~\ref{sec:enforcement-domain}), and ring-3 components its \textit{policy domain} (§~\ref{sec:policy-domain}). The enforcement domain is \textit{policy-agnostic}, implementing an abstract, tagged taint tracking system that exposes decision points to policy influence via reservations. In contrast, policy components need not be aware of the exact enforcement strategy to successfully express their protection schemes. Communication between the two domains is discussed separately in §~\ref{sec:interdomain-comms}.
+
+
 
 \begin{figure}[]
     \centering
     \includegraphics[width=\linewidth]{figures/OverallArchitecture.pdf}
-    \caption{Abstract overview of an SGX enclave's protections.}
-    \label{fig:sgx-basic}
+    \caption{High level overview of the \textsc{Citadel} architecture.}
+    \vspace{-5mm}
+    \label{fig:citadel-overview}
+    \vspace{5mm}
 \end{figure}
 
-\subsection{Workflow and Communication}
-\subsection{LSM}
-\subsection{\texttt{citadeld}}
-\subsubsection{\texttt{libtomcrypt}}
-\subsection{Initialisation}
-\subsection{\texttt{libcitadel}}
 
 
+\subsection{Enforcement Domain}
+\label{sec:enforcement-domain}
 
-\clearpage
+\paragraph{} The Citadel LSM tracks all entities within the Linux system by allocating and attaching a small data structure ($<48$ bytes) to each. The LSM computes and tracks a conservative notion of \textit{taint} for each to ensure \textit{safety}. Tainting in \textsc{Citadel} is dynamic, meaning that entities are only policed if there is a reason. This process is \textit{additive}, only tainting an object if involved in a successful operation crossing the taint boundary (Figure~\ref{fig:taint-boundary}). In additional to automatic propagation, taint for the majority of entities can be amended from the policy domain.
+
+\begin{figure}[]
+    \centering
+    \includegraphics[width=0.55\linewidth]{figures/CitadelTaint.pdf}
+    \caption[Accesses across the taint boundary]{Accesses across the taint boundary taint the untainted party.}
+    \label{fig:taint-boundary}
+\end{figure}
+
+\paragraph{} Recalling that entities can either be \textit{active} or \textit{passive}, a variety of metadata is tracked for each alongside their taint flag. 
+
+\begin{enumerate}
+    \item[---]\textbf{Active}. The only active entities in Linux are processes --- these require a plethora of markers and flags, two of which are core to the LSM's operation; \textit{taint} and its \textit{reservation list}. The remaining metadata is explained by §~4.X.
+    \item[---] \textbf{Passive}. There are many forms of passive entity, the most prevalent being files and other inode-backed structure. These carry \textit{taint}, an \textit{identifier} (tag), and an \textit{anonymous flag} (§~4.X). Inode tracking is detailed first, with other types of passive entities, such as shared memory, discussed in §~4.X. 
+\end{enumerate}
+
+\paragraph{Permissions} Any tainted entity must hold a reservation to perform any operation that may allow data to flow to another entity.
+
+\subsection{Policy Domain}
+\label{sec:policy-domain}
+
+\subsubsection{\texttt{citadeld}}
+
 \begin{figure}[]
     \centering
     \includegraphics[width=\linewidth]{figures/EnclaveLayout.pdf}
@@ -170,3 +196,14 @@
 \end{figure}
 
 
+% \subsubsection{\texttt{libtomcrypt}}
+\subsubsection{Initialisation}
+\subsubsection{\texttt{libcitadel}}
+
+\subsection{Interdomain Communication}
+\label{sec:interdomain-comms}
+
+
+\subsection{Non-standard Enforcement Mechanisms}
+
+\subsection{Additional Security Features}
