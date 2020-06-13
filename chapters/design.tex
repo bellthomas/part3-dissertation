@@ -104,6 +104,7 @@
 \paragraph{} We introduce, for a process $A$, additional state; $A_{r} \subseteq \mathcal{R}$, the set of all reservations it holds. Once a decision has been made, it is important for a reference monitor to be able to change it, revoking access if required. Thus we specify a notion of \textit{validity} with an indicator function, $\mathcal{V}: \mathcal{R} \mapsto \{0,1\}$. A reservation can only be used to obtain access to a resource if it is valid; invalid reservations are deleted.
 
 \subsection{Permissible Operations}
+\label{sec:permissible-operations}
 
 \paragraph{Satisfiability} To determine whether an operation may be permitted, the \textit{constraint reservation} representing it is compared against reservations held by the process. As an example, $t^{\{\texttt{file\_read}\}}$ is the constraint for reading a file tagged with $t$.
 
@@ -165,7 +166,7 @@
 \subsection{Enforcement Domain}
 \label{sec:enforcement-domain}
 
-\paragraph{} The Citadel LSM tracks all entities within the Linux system by allocating and attaching a small data structure ($<48$ bytes) to each. The LSM computes and tracks a conservative notion of \textit{taint} for each to ensure \textit{safety}. Tainting in \textsc{Citadel} is dynamic, meaning that entities are only policed if there is a reason. This process is \textit{additive}, only tainting an object if involved in a successful operation crossing the taint boundary (Figure~\ref{fig:taint-boundary}). In additional to automatic propagation, taint for the majority of entities can be amended from the policy domain.
+\paragraph{} The Citadel LSM tracks all entities within the Linux system by allocating and attaching a small data structure ($<48$ bytes) to each. The LSM computes and tracks a conservative notion of \textit{taint} for each to ensure \textit{safety}. Tainting in \textsc{Citadel} is dynamic, meaning that entities are only policed if there is a reason. This process is \textit{additive}, only tainting an object if it is involved in a successful operation crossing the taint boundary (Figure~\ref{fig:taint-boundary}); this includes the child process created when a tainted process calls \texttt{fork()}. In additional to automatic propagation, taint for the majority of entities is amendable on request from the policy domain.
 
 \begin{figure}[]
     \centering
@@ -174,14 +175,29 @@
     \label{fig:taint-boundary}
 \end{figure}
 
-\paragraph{} Recalling that entities can either be \textit{active} or \textit{passive}, a variety of metadata is tracked for each alongside their taint flag. 
+\paragraph{} Recalling that entities can either be \textit{active} or \textit{passive}, a variety of metadata is tracked for each.
 
 \begin{enumerate}
-    \item[---]\textbf{Active}. The only active entities in Linux are processes --- these require a plethora of markers and flags, two of which are core to the LSM's operation; \textit{taint} and its \textit{reservation list}. The remaining metadata is explained by §~4.X.
-    \item[---] \textbf{Passive}. There are many forms of passive entity, the most prevalent being files and other inode-backed structure. These carry \textit{taint}, an \textit{identifier} (tag), and an \textit{anonymous flag} (§~4.X). Inode tracking is detailed first, with other types of passive entities, such as shared memory, discussed in §~4.X. 
+    \item[---]\textbf{Active}. The only active entities in Linux are processes --- these require a plethora of markers and flags, two of which are core to the LSM's operation; \textit{taint} and its \textit{reservation list}. The remaining metadata is introduced in §~4.X.
+    \item[---] \textbf{Passive}. There are many forms of passive entity, the most prevalent being files and other inode-backed structures. These carry \textit{taint}, an \textit{identifier} (tag), and an \textit{anonymous flag}. Inode tracking is detailed first, with other types of passive entities, such as shared memory, discussed in §~4.X. 
 \end{enumerate}
 
-\paragraph{Permissions} Any tainted entity must hold a reservation to perform any operation that may allow data to flow to another entity.
+\paragraph{Identifiers} Entities may be tagged with a single identifier; this corresponds to a tag in the IFC model, and are randomly assigned 128-bit numbers. If a security policy wishes to maintain pseudonyms for secrecy and integrity, for example, it may internally, but must convert back to the system tag for enforcement.
+
+\paragraph{Extended Attributes} An inode-backed entity's taint flag and identifier are copied to \textit{xattrs} attached to it via the VFS. These occupy the \texttt{security.citadel} namespace, and are essential for ensuring that taints and identifiers persist between boots. Certain entities may be \textit{anonymous}, as indicated by their anonymous flag, meaning that their identifier is not present as an \textit{xattr}. This may either be because the entity does not support \textit{xattrs} (such as files created using \texttt{pipe()}) or that the identifier is temporary.\footnote{Talk about and link to creation flows.}
+
+
+\paragraph{Permissions} Tainted processes must hold a valid reservation in their reservation list to perform any operation that may allow data to flow to another entity; the code for this check is attached in Appendix X for reference, but strictly follows the formal rules presented in §~\ref{sec:permissible-operations}. Untainted processes bypass all checks; the security implications of this are discussed in §~4.X.
+
+\paragraph{Reservation Cache} When the system's policy components present a new reservation to the LSM, it is stored in a structure called the \textit{reservation cache}. Implemented as a red-black tree, it maps a process's identifier to a linked list of its pending reservations. This intermediary storage is necessary as LSMs are event-driven, thus can only access entities state when they are presented for review. Before a permission check is carried out, the LSM ensures that the process's reservation list is up to date by;
+\begin{enumerate}
+    \item \textit{Installing pending tickets}. All reservations held for the process are moved to its internal reservation list, ready for inspection.
+    \item \textit{Disposing of expired entries}. The validity function the LSM uses is time-based. When a reservation is inserted into the reservation cache, it is timestamped with an explicit expiry date --- this lifetime is $15$ seconds by default.  
+\end{enumerate}
+
+
+
+
 
 \subsection{Policy Domain}
 \label{sec:policy-domain}
