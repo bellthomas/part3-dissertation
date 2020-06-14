@@ -270,6 +270,8 @@ citadel_response_t asm_handle_request (pid_t pid,
 \subsubsection{Enforcement Interface}
 \paragraph{} The policy module is interchangeable, but the enforcement interface acts as the backbone of the enclave. All requests are routed through it as a sanitsation step, detecting forgery or and invalid data, and all information leaving it is formatted and signed\footnote{Encryption is discussed in §~\ref{sec:interdomain-comms}} as appropriate. The process of installing reservations created by the enforcement interface, on behalf of the policy module, is detailed in §~\ref{sec:interdomain-comms}.
 
+
+
 % \subsubsection{\texttt{libtomcrypt}}
 \subsubsection{Initialisation}
 \subsubsection{\texttt{libcitadel}}
