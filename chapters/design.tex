@@ -131,7 +131,7 @@
     A \,\xmapsto{\;\omega,\tau\;}\, B \implies & A \xrightharpoonup{\;\omega\;} \tau \label{eqn:flow-abs-conc-map}
 \end{align}
 
-\paragraph{} Together, these define the relationship between an abstract policy space ($A \rightarrow B$, §~\ref{sec:policy-domain}) and concrete implementation ($A \xrightharpoonup{\;\omega\;} \tau$, §~\ref{sec:enforcement-domain}).
+\paragraph{} Together, these define the relationship between an abstract policy space ($A \rightarrow B$, §~\ref{sec:policy-enclave}) and concrete implementation ($A \xrightharpoonup{\;\omega\;} \tau$, §~\ref{sec:enforcement-domain}).
 
 \paragraph{} A handful of small updates are required to make the existing rules consistent with the new: reservations are not transferred when creating a new entity (\ref{eqn:new-creation}), and reservations are not affected by capabilities as they represent a centralised component of the DIFC system. 
 
@@ -164,14 +164,6 @@
 \clearpage
 \section{Implementation}
 
-\paragraph{} \textsc{Citadel} consists of three components; an LSM, \texttt{citadeld}, and \texttt{libcitadel}. Each plays an essential, symbiotic role in the operation of the reference monitor. This section shall present these in the context of \textsc{Citadel}'s architecture, guided by Figure~\ref{fig:citadel-overview}.
-
-\paragraph{Analogy} The system is well modelled by the \textit{will-call} system used by theatres and the like --- clients (\textit{processes}) reserve tickets (\textit{permission}) to attend a show (\textit{perform an operation}) ahead of time via phone or the internet (\texttt{citadeld}), but only receive their tickets (\textit{reservations}) at the venue (\textit{LSM}) on the day (\textit{at the point of execution}).
-
-\paragraph{} \textsc{Citadel}'s ring-0 components comprise its \textit{enforcement domain} (§~\ref{sec:enforcement-domain}), and ring-3 components its \textit{policy domain} (§~\ref{sec:policy-domain}). The enforcement domain is \textit{policy-agnostic}, implementing an abstract, tagged taint tracking system that exposes decision points to policy influence via reservations. In contrast, policy components need not be aware of the exact enforcement strategy to successfully express their protection schemes. Communication between the two domains is discussed separately in §~\ref{sec:interdomain-comms}.
-
-
-
 \begin{figure}[]
     \centering
     \includegraphics[width=\linewidth]{figures/OverallArchitecture.pdf}
@@ -181,12 +173,16 @@
     \vspace{5mm}
 \end{figure}
 
+\paragraph{} \textsc{Citadel} consists of three components; an LSM, \texttt{citadeld}, and \texttt{libcitadel}. Each plays an essential, symbiotic role in the operation of the reference monitor. The prototype required in excess of 9,000 lines of C and C++, and extends the Linux kernel build system (§~\ref{sec:build-system}). This section shall present \textsc{Citadel}'s architecture, guided by Figure~\ref{fig:citadel-overview}.
+
+\paragraph{Analogy} The system is well modelled by the \textit{will-call} system used by theatres and the like --- clients (\textit{processes}) reserve tickets (\textit{permission}) to attend a show (\textit{perform an operation}) ahead of time via phone or the internet (\texttt{citadeld}), but only receive their tickets (\textit{reservations}) at the venue (\textit{LSM}) on the day (\textit{at the point of execution}).
+
+\paragraph{} \textsc{Citadel}'s ring-0 components comprise its \textit{enforcement domain} (§~\ref{sec:enforcement-domain}), and \texttt{citadeld} components its \textit{policy domain} (§~\ref{sec:policy-enclave}). The enforcement domain is \textit{policy-agnostic}, implementing an abstract, tagged taint tracking system that exposes decision points to policy influence via reservations. In contrast, policy components need not be aware of the exact enforcement strategy to successfully express their protection schemes. Communication between the two domains is discussed separately in §~\ref{sec:interdomain-comms}.
+
 
 
 \subsection{Enforcement Domain}
 \label{sec:enforcement-domain}
-
-\paragraph{} The Citadel LSM tracks all entities within the Linux system by allocating and attaching a small data structure ($<48$ bytes) to each. The LSM computes and tracks a conservative notion of \textit{taint} for each to ensure \textit{safety}. Tainting in \textsc{Citadel} is dynamic, meaning that entities are only policed if there is a reason. This process is \textit{additive}, only tainting an object if it is involved in a successful operation crossing the taint boundary (Figure~\ref{fig:taint-boundary}); this includes the child process created when a tainted process calls \texttt{fork()}. In additional to automatic propagation, taint for the majority of entities is amendable on request from the policy domain.
 
 \begin{figure}[]
     \centering
@@ -194,6 +190,8 @@
     \caption[Accesses across the taint boundary]{Accesses across the taint boundary taint the untainted party.}
     \label{fig:taint-boundary}
 \end{figure}
+
+\paragraph{} The Citadel LSM tracks all entities within the Linux system by allocating and attaching a small data structure ($<48$ bytes) to each. The LSM computes and tracks a conservative notion of \textit{taint} for each to ensure \textit{safety}. Tainting in \textsc{Citadel} is dynamic, meaning that entities are only policed if there is a reason. This process is \textit{additive}, only tainting an object if it is involved in a successful operation crossing the taint boundary (Figure~\ref{fig:taint-boundary}); this includes the child process created when a tainted process calls \texttt{fork()}. In additional to automatic propagation, taint for the majority of entities is amendable on request from the policy domain.
 
 \paragraph{} Recalling that entities can either be \textit{active} or \textit{passive}, a variety of metadata is tracked for each.
 
@@ -212,6 +210,7 @@
 \subsubsection{Permissions} 
 \paragraph{} Tainted processes must hold a valid reservation in their reservation list to perform any operation that may allow data to flow to another entity; the code for this check is attached in Appendix X for reference, but strictly follows the formal rules presented in §~\ref{sec:permissible-operations}. Untainted processes bypass all checks; the security implications of this are discussed in §~4.X.
 
+
 \subsubsection{Reservation Cache} 
 \paragraph{} When the system's policy domain presents a new reservation to the LSM, it is stored in a structure called the \textit{reservation cache}. Implemented as a red-black tree, it maps a process's identifier to a linked list of its pending reservations. This intermediary storage is necessary as LSMs are event-driven, and thus can only access an entity's state when it is presented for review. Before a permission check is carried out, the LSM ensures that the process's reservation list is up to date by;
 \begin{enumerate}
@@ -228,23 +227,48 @@
 \end{enumerate}
 
 
-\paragraph{\texttt{fork()}} In Linux, child processes are initially exact clones of their parent, with access to the same state and file descriptors. Thus children of tainted processes are also tainted, but importantly do not assume the same rights as their parents --- open file descriptors will not fucntion without revalidation (§~4.X), and children must request the right to to their parent's transient entities via a special command to use pipes or similar. It is the prerogative of the policy enclave to validate that the security contexts of the parent and child have not diverged.
+\paragraph{\texttt{fork()}} In Linux, child processes are initially exact clones of their parent, with access to the same state and file descriptors. Thus children of tainted processes are also tainted, but importantly do not assume the same rights as their parents --- open file descriptors will not fucntion without revalidation (§~4.X), and children must request the right to to their parent's transient entities via a special command to use pipes or similar. It is the prerogative of the policy enclave to validate that the security contexts of the parent and child have not diverged. \textcolor{red}{mention leakage through fd state}
 
 
 
 
-\subsection{Policy Domain}
-\label{sec:policy-domain}
 
-\subsubsection{\texttt{citadeld}}
+\subsection{Policy Components}
+\label{sec:policy-enclave}
+
+\paragraph{} The policy counterpart to the LSM's enforcement is contained within \texttt{citadeld}, a userspace service that hosts the core SGX enclave. \texttt{citadeld} is modular, hosting an independent policy module sitting on top of an enforcement translation library (Figure~\ref{fig:policy-enclave}).
+
+\subsubsection{Abstract Security Models}
+\paragraph{} The policy module embedded in \texttt{citadeld} is presented with a simple, event-driven interface that abstracts the reality of enforcement away; these policy module are referred to as ASMs. Their implementation is based around a single method, through which their permission is sought when required; \texttt{asm\_handle\_request(3)}.
+
+
+\paragraph{} The simplest possible ASM is as follows; any operation between or using any entity is deemed permissible. The request parameter, amongst other things, holds the target identifier and set of operations. 
+
+\begin{minted}[fontsize=\footnotesize]{c}
+citadel_response_t asm_handle_request (pid_t pid, 
+        struct citadel_op_request *request, void *metadata) {
+    return CITADEL_OP_APPROVED;
+}
+\end{minted}
 
 \begin{figure}[]
     \centering
-    \includegraphics[width=\linewidth]{figures/EnclaveLayout.pdf}
-    \caption{Abstract overview of an SGX enclave's protections.}
-    \label{fig:sgx-basic}
+    \includegraphics[width=0.9\linewidth]{figures/EnclaveLayout.pdf}
+    \caption{Overview of the components inside \texttt{citadeld}.}
+    \label{fig:policy-enclave}
 \end{figure}
 
+\paragraph{} This can be considered to determine the validity of an operation, $A \xrightharpoonup{\;\omega\;} t$, based on its knowledge of any implicated flows ($A \rightarrow *$).
+
+\paragraph{Operations} Entity operations, $\Omega$, are presented as \texttt{citadel\_operation\_t}, a simple bit mask over the operations \textsc{Citadel} recognises (Appendix X). Similarly, policy decisions are represented using \texttt{citadel\_response\_t}; these may be \textit{approved}, \textit{rejected}, \textit{error}, \textit{invalid}, \textit{granted},\footnote{Approved, and confirming that the process is recognised as the owner of the entity.} and \textit{forged}.\footnote{Discussed in §~4.X.}
+
+
+\subsubsection{Host Application}
+\paragraph{} Before requests (§~4.X) are presented to the resident ASM, various steps need to be taken in preparation. Requests often refer to absolute filepaths, creating a need to retrieve their tags, if they exist --- these requests are served by the security \textit{xattrs} attached to the VFS file. Translation is performed preemptively depending on the operation requested, and to minimise any lookup overhead, results are cached in a \textit{translation cache}. This is implemented using \textit{sparsehash},\footnote{\url{https://github.com/sparsehash/sparsehash}} taking great care to detect and remove stale items.
+
+
+\subsubsection{Enforcement Interface}
+\paragraph{} The policy module is interchangeable, but the enforcement interface acts as the backbone of the enclave. All requests are routed through it as a sanitsation step, detecting forgery or and invalid data, and all information leaving it is formatted and signed\footnote{Encryption is discussed in §~\ref{sec:interdomain-comms}} as appropriate. The process of installing reservations created by the enforcement interface, on behalf of the policy module, is detailed in §~\ref{sec:interdomain-comms}.
 
 % \subsubsection{\texttt{libtomcrypt}}
 \subsubsection{Initialisation}
@@ -257,3 +281,6 @@
 \subsection{Non-standard Enforcement Mechanisms}
 
 \subsection{Additional Security Features}
+
+\subsection{\textsc{Citadel} Build System}
+\label{sec:build-system}
