@@ -200,6 +200,16 @@
 \end{enumerate}
 
 
+\subsubsection{Entity Creation}
+\paragraph{} Every newly spawned process is privately tagged by the LSM as if it were a passive entity. The purpose of this identifier is not to directly identify the process, but to provide a mechanism for associating any private, passive entities it creates with it. This includes the file descriptors provided by \texttt{pipe()}, and any new files it creates using \texttt{open()}. Every process always has permission to access its transient entities, and external entities can only gain the right to access them if they;
+\begin{enumerate}
+    \item Are a child processes and request access to their parent, or
+    \item The process officially \textit{claims} them via the policy enclave, which gives them an independent tag and removes it as a transient entity. 
+\end{enumerate}
+
+
+\paragraph{\texttt{fork()}}
+
 
 
 
