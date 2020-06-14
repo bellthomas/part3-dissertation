@@ -140,6 +140,26 @@
     A \Rightarrow B \implies A_s = B_s \; \wedge \; A_i = B_i \; \wedge \; B_r = \varnothing \label{eqn:new-creation}
 \end{equation}
 
+
+\subsection{Transient Entities}
+\label{sec:transient-entities}
+
+\paragraph{} Alongside active and passive entities, we introduce a third type; \textit{transient} entities. These are passive entities that are privately held by an owning active entitiy; they will be used to model Linux functions such as \texttt{pipe()} and uninitialised files.
+
+\paragraph{} To facilitate this, all processes will be assigned a unique tag $p \in \mathcal{T}$, and any files it creates will initially also be tagged with $p$. Using $\mathcal{P}$ as the set of all process identifiers, we define $\mathcal{I}$ as the function returning a process's transient identifier;
+
+\vspace{-5mm}
+\begin{equation}
+    \mathcal{I}: \mathcal{P} \mapsto \mathcal{T}
+\end{equation}
+
+\paragraph{} The modified expression for a \textit{permissible operation} now becomes;
+
+\vspace{-5mm}
+\begin{equation}
+    A \xrightharpoonup{\;\omega\;} t \iff \mathcal{I}(A) = t \;\lor\; (\exists \; t^{\alpha} \in A_r \implies t^{\omega} \sprecsim t^{\alpha})
+\end{equation}
+
 % ---------------
 \clearpage
 \section{Implementation}
@@ -201,14 +221,14 @@
 
 
 \subsubsection{Entity Creation}
-\paragraph{} Every newly spawned process is privately tagged by the LSM as if it were a passive entity. The purpose of this identifier is not to directly identify the process, but to provide a mechanism for associating any private, passive entities it creates with it. This includes the file descriptors provided by \texttt{pipe()}, and any new files it creates using \texttt{open()}. Every process always has permission to access its transient entities, and external entities can only gain the right to access them if they;
+\paragraph{} As detailed in §~\ref{sec:transient-entities}, every newly spawned process is privately tagged by the LSM as if it were a passive entity. The purpose of this identifier is not to directly identify the process, but to provide a mechanism for associating any private, passive entities it creates with it. This includes the file descriptors provided by \texttt{pipe()}, and any new files it creates using \texttt{open()}. Every process always has permission to access its transient entities, and external entities can only gain the right to access them if they;
 \begin{enumerate}
     \item Are a child processes and request access to their parent, or
-    \item The process officially \textit{claims} them via the policy enclave, which gives them an independent tag and removes it as a transient entity. 
+    \item The process officially \textit{claims} them via the policy enclave, which gives them an independent tag and removes the entity's status as transient. 
 \end{enumerate}
 
 
-\paragraph{\texttt{fork()}}
+\paragraph{\texttt{fork()}} In Linux, child processes are initially exact clones of their parent, with access to the same state and file descriptors. Thus children of tainted processes are also tainted, but importantly do not assume the same rights as their parents --- open file descriptors will not fucntion without revalidation (§~4.X), and children must request the right to to their parent's transient entities via a special command to use pipes or similar. It is the prerogative of the policy enclave to validate that the security contexts of the parent and child have not diverged.
 
 
 
