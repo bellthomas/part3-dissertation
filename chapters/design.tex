@@ -308,6 +308,56 @@ citadel_response_t asm_handle_request (pid_t pid,
 
 \subsection{\texttt{libcitadel}}
 \label{sec:libcitadel}
+\paragraph{} \textsc{Citadel} provides a userspace auxiliay library to make integrating existing programs as effortless as possible. For each mediated \textit{syscall} (e.g. \texttt{open()}), it provides a proxy function (\texttt{c\_open()}): this would, in a future iteration of this design, be integrated directly into \texttt{libc}, but currently requires no major changes to applications' workflows. A good example of this in action is the ported version of \textit{Nginx} (§~5.X).
+
+\paragraph{} \texttt{libcitadel} performs two main functions;
+\begin{enumerate}
+    \item Communication with the policy enclave.
+    \item Tracking and predicting what permissions it believes the process has.
+\end{enumerate}
+
+\paragraph{} Communication is facilitated via the UNIX domain socket provided by \texttt{citadeld}. A zero-copy approach\footnote{Of course excluding copying in the kernel and when transferring the request into the enclave.} is used to minimise latency on both sides; this is optimised for in the protocol design, and great effort has been put into minimising the cost of communication here. Each side verifies the PID of the other party, as detailed in §~\ref{sec:ptokens}.
+
+\paragraph{} Caching at this level has a tremendous impact on overall performance. when reading a large file, for example, a program may make thousands of calls to \texttt{c\_read()} on the same file --- making an external call to \texttt{citadel} would be a hude waste, as processes have, in most cases, enough information to infer what their current position may be.
+
+\paragraph{} To this end, every process  maintains a list of \textit{expectations} --- the reservations it believes it has, including their validity --- and whether they have inferred that they have been tainted by the LSM. They cannot exactly know the true values of these, especially as the policy enclave may grant different permissions than asked for, but in \textit{Nginx}, as an example, over 97\% of requests were servable locally in a realistic workload. Using the same workflow, untainted processes speculatively execute operations, again removing the need to involve \texttt{citadeld}. The performance gain of requests served from the cache reduces the overhead from $\mathcal{O}(10\mu s)$ to $\mathcal{O}(100ns)$.
+
+
+\begin{listing}
+\begin{minted}[fontsize=\scriptsize]{c}
+int c_open(const char *pathname, int oflag, mode_t mode) {
+    int fd; bool from_cache = false;
+    bool creating = access(pathname, F_OK) == -1 && (oflag & O_CREAT) > 0;
+    
+    // Pre-emptively attempt access if I suspect I'm not tainted.
+    // Alteratively, register a transient file is we're creating it.
+    //    We close and reopen automatically to ensure it is independently tagged.
+    if (!am_tainted() || creating) {
+        fd = open(pathname, oflag, mode);
+        if (!am_tainted() && fd > 0)
+            return fd;
+        if (fd == -1 && errno != -EPERM)
+            return -1;
+        close(fd);
+    }
+
+    // Request access from the policy enclave. Claims the file if not tagged.
+    if (!citadel_file_open_ext(pathname, strlen(pathname)+1, &from_cache))
+        return -EPERM;
+
+    // Continue as normal.
+    fd = open(pathname, oflag, mode);
+    if (!from_cache) citadel_declare_fd(fd, CITADEL_OP_OPEN);
+    if (!am_tainted()) set_taint();
+    return fd;
+}
+\end{minted}
+\caption{The \texttt{libcitadel} shim function for \texttt{open()}.}
+\label{lst:c_open}
+\end{listing}
+
+\paragraph{} A core challenge of the cache is relating open file descriptors to the permissions they require. This at points requires some manual work, including fetching its \textit{xattr} tag with \texttt{fgetxattr()} and esimtating the expiration time of the LSM's underlying reservation. Ideally \texttt{libcitadel} requests revalidation just before expiry to ensure no unexpected drop in service; this is particulary important for applications unaware of \textsc{Citadel}.
+
 
 \subsection{Additional Security Features}
 
