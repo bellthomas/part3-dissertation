@@ -386,8 +386,15 @@ uint64_t pid = cred.pid;
 \end{minted}
 
 \subsubsection{PID Protection}
-\paragraph{} The LSM also implements a mechanism to detect PID forgery --- as shown in Appendix X, it is theoretically possible for a process to modify its PID with the help of a malicious kernel module. This, if unchecked, would be detrimental for the LSM's integrity, as it would allow a process to silently assume the identity of another. To this end, the LSM stores a process's PID within its security structure and routinely checks to ensure it does not change unexpectedly.\footnote{An expected change would be on \texttt{fork()}, in which case the stored PID should be that of the parent process.} Any process deemed to have an illegitimate PID is denied access to all entities, effectively killing it.
+\paragraph{} The LSM also implements a mechanism to detect PID forgery --- as shown in Appendix X, it is theoretically possible for a process to modify its PID with the help of a malicious kernel module. This, if unchecked, would be detrimental for the LSM's integrity, as it would allow a process to silently assume the identity of another. To this end, the LSM stores a process's PID within its security structure and routinely checks to ensure it does not change unexpectedly.\footnote{A valid change would be on \texttt{fork()}, in which case the stored PID should equal the parent process's.} Any process deemed to have an illegitimate PID is denied access to all entities, effectively killing it.
 
 \subsection{\textsc{Citadel} Build System}
 \label{sec:build-system}
-\paragraph{}
+\paragraph{} Building \textsc{Citadel} requires both the kernel and policy enclave to be in agreement about the RSA keys to be used; without this building will fail. This is achieved using a preparatory script that does the following;\footnote{The script assumes a valid kernel with the \textsc{Citadel} LSM installed is present.}
+
+\begin{enumerate}
+    \item Generate two \textit{OpenSSL}\footnote{\url{https://www.openssl.org/}} 2048-bit RSA keys in \textit{DER} format --- the kernel's \textit{Crypto API} requires keys to present themselves as \textit{ASN.1 structures}.\footnote{\url{https://tls.mbed.org/kb/cryptography/asn1-key-structures-in-der-and-pem}}
+    \item Compile and launch \textsc{Citadel}'s \textit{preparatory enclave}; this must be signed with the same \textit{signing identity} as any policy enclaves generated. This ingests the two keys and generates a sealed keyset to present presented to initialising enclaves.
+    \item An interface file (\texttt{keys.h}) is then generated in the kernel's source directory --- this file contains the kernel's keypair, the enclave's public key, and the aforementioned sealed keyset. The key files are now deleted.
+    \item The policy enclaves are then built and signed. The kernel may now be compiled.
+\end{enumerate}
