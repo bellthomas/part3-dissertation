@@ -115,7 +115,7 @@
 
 % ---------
 
-\section{Intel SGX}
+\section{Intel® SGX}
 
 \paragraph{} Intel's Software Guard Extensions, SGX, was first announced and detailed in a handful of whitepaper documents published from 2013.~\cite{10.1145/2487726.2488370, 10.1145/2487726.2488368, Anati2013InnovativeTF, sgx-sgx-reference} It described a novel approach to \textit{trusted computing}, creating in-CPU containers with dedicated protected memory pools. These regions, called \textit{enclaves}, cannot be read from or written to by an unauthorised party due to fundamental protection mechanisms provided by the x86 architecture, even if running in \textit{Ring 0}:\footnote{x86 offers four protection \textit{rings}, of which Linux uses two --- \textit{0} for the kernel, and \textit{3} for userspace.} Figure~\ref{fig:sgx-basic} illustrates this. \textit{Enclaves} guarantee both integrity and secrecy to the application running inside it, even in the presence of a malicious host.
 

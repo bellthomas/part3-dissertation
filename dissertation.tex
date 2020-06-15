@@ -46,6 +46,8 @@
     \ooalign{$\sqsubset$\cr$-$\cr}%
   }}%
 }
+
+
 %% START OF DOCUMENT
 \begin{document}
 
@@ -65,7 +67,9 @@
 \setcounter{page}{0}
 \pagestyle{plain}
 \tableofcontents
+\addcontentsline{toc}{section}{\listfigurename}
 \listoffigures
+\addcontentsline{toc}{section}{\listtablename}
 \listoftables
 
 \onehalfspacing
@@ -104,30 +108,33 @@
 \appendix
 \singlespacing
 
+\chapter{PID Tampering: Proof of Concept}
 
+\begin{listing}[h]
+\begin{minted}[fontsize=\small]{c}
+static asmlinkage void (*_change_pid)
+      (struct task_struct *task, enum pid_type type, struct pid *pid);
+static asmlinkage struct pid* (*_alloc_pid)(struct pid_namespace *ns);
 
-% \begin{minted}{c}
-% static asmlinkage void (*_change_pid)(struct task_struct *task, 
-%                                       enum pid_type type, struct pid *pid);
-% static asmlinkage struct pid* (*_alloc_pid)(struct pid_namespace *ns);
+static ssize_t change_pid(void)
+{
+    struct pid* newpid = _alloc_pid(task_active_pid_ns(current));
+    _change_pid(current, PIDTYPE_PID, newpid);
+    /* current->pid has changed. */
+}
 
-% static ssize_t change_pid(void)
-% {
-%     struct pid* newpid = _alloc_pid(task_active_pid_ns(current));
-%     _change_pid(current, PIDTYPE_PID, newpid);
-%     /* current->pid has changed. */
-% }
+static int __init module_init(void)
+{
+    _change_pid = find_sym("change_pid");
+    _alloc_pid = find_sym("alloc_pid");
+    /* ... */
+    /* On SysFS call execute change_pid(void) */
+    return 0;
+}
 
-% static int __init module_init(void)
-% {
-%     _change_pid = find_sym("change_pid");
-%     _alloc_pid = find_sym("alloc_pid");
-%     /* ... */
-%     /* On SysFS call execute change_pid(void) */
-%     return 0;
-% }
-
-% \end{minted}
+\end{minted}
+\caption{Outline for a proof of concept kernel module to change a process's PID.}
+\end{listing}
 
 \bibliographystyle{unsrt} 
 \bibliography{references} 
