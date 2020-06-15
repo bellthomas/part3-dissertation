@@ -49,7 +49,7 @@
 \begin{figure}[]
     \centering
     \includegraphics[width=0.98\linewidth]{figures/SGX-EnclaveIntegration-Design}
-    \caption{}
+    \caption{Two possible enclave integration designs.}
     \vspace{2mm}
     \label{fig:sgx-integration}
     \vspace{5mm}
@@ -245,7 +245,7 @@
 
 \paragraph{} The simplest possible policy is as follows; any operation between or using any entity is deemed permissible. The request parameter, amongst other things, holds the target identifier and set of operations. 
 
-\begin{minted}[fontsize=\footnotesize]{c}
+\begin{minted}[fontsize=\small]{c}
 citadel_response_t asm_handle_request (pid_t pid, 
         struct citadel_op_request *request, void *metadata) {
     return CITADEL_OP_APPROVED;
@@ -357,6 +357,8 @@ int c_open(const char *pathname, int oflag, mode_t mode) {
 \end{listing}
 
 \paragraph{} A core challenge of the cache is relating open file descriptors to the permissions they require. This at points requires some manual work, including fetching its \textit{xattr} tag with \texttt{fgetxattr()} and estimating the expiration time of the LSM's underlying reservation. Ideally \texttt{libcitadel} requests revalidation just before expiry to ensure no unexpected drop in service; this is particulary important for applications unaware of \textsc{Citadel}.
+
+\paragraph{} Special care has to be taken when handling child processes. As already discussed, children are given a copy of all parent process state --- this includes its \texttt{libcitadel} cache. Although the LSM does not pass any reservations on to the child, \texttt{libcitadel} maintains the same \textit{expectation} cache. Entries in it are marked as invalid, to force the child to revalidate a file descriptor before first use. Additionally, we assume that a process trusts the initialisation code of its child, enabling \texttt{libcitadel} to delete the parent's \textit{ptoken} (§~\ref{sec:ptokens}); the \texttt{c\_fork()} function handles this automatically.
 
 
 \subsection{Additional Security Features}
