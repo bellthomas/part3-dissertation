@@ -25,12 +25,19 @@
 
 
 %\usepackage[dvips]{epsfig,graphics} 
-\usepackage{epsfig,graphicx,verbatim,parskip,tabularx,setspace,xspace,geometry,amssymb,mathtools,url,hyperref,xcolor,relsize}
+\usepackage{epsfig,graphicx,verbatim,parskip,tabularx,setspace,xspace,geometry,amssymb,mathtools,url,xcolor,relsize,backref}
+\usepackage[backref=page]{hyperref}
 \usepackage[tt=false]{libertine}
 \usepackage{multirow}
 \usepackage{minted}
 \usepackage[mathscr]{euscript}
 
+\renewcommand*{\backref}[1]{}
+\renewcommand*{\backrefalt}[4]{%
+    \ifcase #1 (Not cited.)%
+    \or        (Cited on page~#2.)%
+    \else      (Cited on pages~#2.)%
+    \fi}
 \setminted{
     linenos=true,
     autogobble,
