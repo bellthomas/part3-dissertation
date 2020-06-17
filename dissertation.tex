@@ -44,6 +44,7 @@
 }
 \newenvironment{longlisting}{\captionsetup{type=listing}}{}
 \setcounter{secnumdepth}{3}
+\setcounter{tocdepth}{2}
 
 % Special preorder symbol.
 \newcommand{\sprecsim}{\kern0.5ex\vcenter{\hbox{\scalebox{0.75}{$\textstyle\precsim\,$}}}\kern0.5ex}
@@ -98,7 +99,7 @@
 \label{sec:related}
 \input{chapters/related}
 
-\chapter{Design}
+\chapter{\textsc{Citadel}}
 \label{sec:design}
 \input{chapters/design}
 
@@ -120,6 +121,24 @@
 
 \begin{listing}[h]
 \begin{minted}[fontsize=\small]{c}
+static void* retrieve_symbol(const char *sym) { 
+   static unsigned long faddr = 0;  
+
+   // Compare kernel symbol with query.
+   int symcmp(void* data, const char* sym, struct module* mod, 
+              unsigned long addr) { 
+      if(!strcmp((char*)data, sym)) { 
+         faddr = addr; 
+         return 1; 
+      } 
+      else return 0; 
+   }; 
+
+   kallsyms_on_each_symbol(symcmp, (void*)sym); 
+   return (void*)faddr; 
+} 
+
+
 static asmlinkage void (*_change_pid)
       (struct task_struct *task, enum pid_type type, struct pid *pid);
 static asmlinkage struct pid* (*_alloc_pid)(struct pid_namespace *ns);
@@ -133,8 +152,8 @@ static ssize_t change_pid(void)
 
 static int __init module_init(void)
 {
-    _change_pid = find_sym("change_pid");
-    _alloc_pid = find_sym("alloc_pid");
+    _change_pid = retrieve_symbol("change_pid");
+    _alloc_pid = retrieve_symbol("alloc_pid");
     /* ... */
     /* On SysFS call execute change_pid(void) */
     return 0;
