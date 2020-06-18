@@ -10,50 +10,42 @@
     
     \renewcommand\theadfont{\normalsize}
     \renewcommand\arraystretch{1.2}
-    \begin{tabular}{l@{\hskip 0.1in} r@{\hskip 0.5in} r@{\hskip 0.25in} r} 
+    \begin{tabular}{l@{\hskip 0.15in} r@{\hskip 0.6in} r@{\hskip 0.35in} r} 
         
         \toprule
         & \thead{\multirow{2}{*}{\textsc{Native}}} & \multicolumn{2}{c}{\thead{\textsc{Citadel}}} \\
         \cline{3-4}
-        &  & \thead{\textit{Amortised}} & \thead{\textit{Cacheless}} \\
+        &  & \thead{\textit{Amortised}} & \thead{\textit{Cache Miss}} \\
         % \cline{1-4}
         \midrule 
-        \texttt{open()} & $1.493 \pm 0.123$ & $1.493 \pm 0.123$ & $1.493 \pm 0.123$ \\
-        $\longrightarrow\;$\texttt{read()} & 0.2 & 1.2 & 0.31 \\
-        $\longrightarrow\;$\texttt{write()} & 0.2 & 1.2 & 0.31 \\
+        \texttt{open()} & $1.675\pm0.076$ & $6.083\pm0.129$ & $50.133\pm1.482$ \\
+        \texttt{read()} & $5.724\pm0.206$ & $7.010\pm0.192$ & $54.736\pm1.556$ \\
+        \texttt{write()} & $14.340\pm0.208$ & $15.597\pm0.250$ & $63.824\pm1.902$ \\
+        \texttt{close()} & $0.651\pm0.005$ & \multicolumn{2}{c}{$0.718\pm0.011$} \\
+
+        
 
         \midrule 
-        \texttt{fopen()} & 0.2 & 1.2 & 0.31 \\
-        $\longrightarrow\;$\texttt{read()} & 0.2 & 1.2 & 0.31 \\
-        $\longrightarrow\;$\texttt{write()} & 0.2 & 1.2 & 0.31 \\
+        \texttt{socket()} & $1.446\pm0.179$ & \multicolumn{2}{c}{$3.156\pm0.291$} \\
+        \texttt{bind()} & $0.762\pm0.023$ & $1.911\pm0.183$ & $49.110\pm1.746$ \\
+        \texttt{listen()} & $0.705\pm0.015$ & $1.882\pm0.149$ & $48.411\pm1.386$ \\
+        \texttt{connect()} & $16.570\pm0.278$ & $17.961\pm0.330$ & $66.273\pm2.147$ \\
 
         \midrule 
-        \texttt{socket()} & 0.2 & 1.2 & 0.31 \\
-        $\longrightarrow\;$\texttt{read()} & 0.2 & 1.2 & 0.31 \\
-        $\longrightarrow\;$\texttt{write()} & 0.2 & 1.2 & 0.31 \\
-        $\longrightarrow\;$\texttt{bind()} & 0.2 & 1.2 & 0.31 \\
-        $\longrightarrow\;$\texttt{connect()} & 0.2 & 1.2 & 0.31 \\
-        $\longrightarrow\;$\texttt{listen()} & 0.2 & 1.2 & 0.31 \\
+        \texttt{shmget()} & $1.880\pm0.122$ & $1.913\pm0.111$ & $49.326\pm1.466$ \\
+        \texttt{shmat()} & $0.420\pm0.005$ & $1.575\pm0.134$ & $47.997\pm1.560$ \\
+        \texttt{shmctl()} & $0.418\pm0.005$ & $0.743\pm0.083$ & $45.912\pm1.114$ \\
+        \texttt{shmdt()} & $0.415\pm0.003$ & \multicolumn{2}{c}{$1.342\pm0.040$} \\
 
-        \midrule 
-        \texttt{shmget()} & 0.2 & 1.2 & 0.31 \\
-        \texttt{shmat()} & 0.2 & 1.2 & 0.31 \\
-        \texttt{shmctl()} & 0.2 & 1.2 & 0.31 \\
 
 
         \midrule 
-        \texttt{pipe()} & 0.2 & 1.2 & 0.31 \\
-        $\longrightarrow\;$\texttt{read()} & 0.2 & 1.2 & 0.31 \\
-        $\longrightarrow\;$\texttt{write()} & 0.2 & 1.2 & 0.31 \\
+        \texttt{pipe()} & $1.110\pm0.061$ & $1.288\pm0.069$ & $47.334\pm1.147$ \\
+        \texttt{mkfifo()} & $3.865\pm0.048$ & $11.509\pm0.405$ & $59.623\pm1.788$ \\
 
         \midrule 
-        \texttt{mkfifo()} & 0.2 & 1.2 & 0.31 \\
-        $\longrightarrow\;$\texttt{read()} & 0.2 & 1.2 & 0.31 \\
-        $\longrightarrow\;$\texttt{write()} & 0.2 & 1.2 & 0.31 \\
-
-        \midrule 
-        \texttt{fork()} & 0.2 & 1.2 & 0.31 \\
-        \texttt{citadel\_init()} & 0.2 & 1.2 & 0.31 \\
+        \texttt{fork()} & $47.866\pm3.175$ & $48.647\pm3.457$ & $81.174\pm3.829$ \\
+        \texttt{citadel\_init()} & $-$ & $0.801\pm0.009$ & $34.940\pm1.329$ \\
         \bottomrule
     \end{tabular}
 
