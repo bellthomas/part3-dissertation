@@ -85,22 +85,24 @@
 
 \paragraph{} A custom benchmark tool was built to assess the overall impact \textsc{Citadel} has on \textit{syscall} performance --- for example, the duration of \texttt{open()} compared to \texttt{c\_open()}. Table~\ref{table:syscall-microbenchmarks} presents these results. To give a fair comparison, two figures are reported for \textsc{Citadel}. \textit{Amortised} refers to the normal operation of \texttt{libcitadel}, in which the majority of queries are served from the cache; overhead arises from both local cache operations and added kernel latency from the LSM. The other figure, \textit{Cache Miss}, gives the overhead when caching is disabled, thus including communication with \texttt{citadeld}.
 
-\paragraph{} Overall \texttt{libcitadel} contributes $\sim{}1 \mu s$ of overhead (amortised) on average --- this rises to $\sim$~$40 \mu s$ on a cache miss. Figure~\ref{fig:open-anatomy} presents a more detailed view of where exactly this overhead arises, approximately plotting where the control flow for \texttt{c\_open()} moves (on a cache miss). Interestingly, the slowest component is the communication channel between \texttt{libcitadel} and \texttt{citadeld} ($26\mu s$ median);\footnote{Included in the \textit{Application} regions.} as a result, the core reference monitor functionality only adds a median penalty of $24\mu s$. The final \textit{Kernel} call before terminating is the internal call to \texttt{open()}.
+\paragraph{} Overall \texttt{libcitadel} contributes $\sim{}1 \mu s$ of overhead (amortised) on average --- this rises to $\sim$~$40 \mu s$ on a cache miss. Figure~\ref{fig:open-anatomy} presents a more detailed view of where exactly this overhead arises, approximately plotting where the control flow for \texttt{c\_open()} moves (on a cache miss). Interestingly, the slowest component is the communication channel between \texttt{libcitadel} and \texttt{citadeld} ($26\mu s$ median);\footnote{Included in the \textit{Application} regions.} as a result, the core reference monitor functionality only adds a median penalty of $24\mu s$. The final \textit{Kernel} call before terminating is the internal call to \texttt{open()}. Additionally, the $10^{th}$ percentile demonstrates that the first \textit{Kernel} call is not always required if the entity's metadata is resident in the cache.
 
-\paragraph{} Figure~\ref{fig:io-graph}
-
+\paragraph{} Figure~\ref{fig:io-graph} plots observed effective bandwidth whilst reading from and writing to a 16 MiB file with different sized buffers. The benchmark driving this was adapted for Linux from one written by R.~Watson for FreeBSD.~\cite{l41-benchmark} The results clearly show \textsc{Citadel} having a more adverse effect on performance for smaller buffer sizes; this is logical, as smaller buffers force a larger number of calls to \texttt{read()}/\texttt{write()}. The reason for \textsc{Citadel} providing better performance for large buffers with \texttt{write()} is unclear --- the difference is statistically significant (at 5\% confidence) and reproducable. More work is required to 
+narrow down the root causes, but hypotheses include the fact that regular, small delays could ease pressure on microarchitectural cache in the processor, affording slight optimisations.
 \begin{figure}[]
     \centering
     \includegraphics[width=\linewidth]{figures/graphs/io.pdf}
     \vspace{-5mm}
     \captionsetup{justification=centering}
-    \caption[Effective \texttt{read()/write()} bandwidths for both the native Linux kernel and \textsc{Citadel}.]{Effective \texttt{read()/write()} bandwidths for both the native Linux kernel and \textsc{Citadel}. The percentage overhead is also presented. $n=200$.}
+    \caption[Effective \texttt{read()/write()} bandwidths for both the native Linux kernel and \textsc{Citadel}.]{Effective \texttt{read()/write()} bandwidths for both the native Linux kernel and \textsc{Citadel}. The percentage overhead is also presented. $n=200$ per buffer size.}
     \label{fig:io-graph}
 \end{figure}
 
 
 \subsection{IPC Microbenchmarks}
 \label{sec:ipc-microbenchmarks}
+
+\paragraph{} Again using the modified Watson benchmark, we investigated the effect \textsc{Citadel} has on IPC. We investigate \textit{pipes}, \textit{local sockets} (\texttt{socketpair()}), and \textit{regular sockets}, between 2 threads (Figure~\ref{fig:ipc-2thread-graph}) and between a parent and child process (Figure~\ref{fig:ipc-2proc-graph}).
 
 \begin{figure}[]
     \centering
