@@ -11,12 +11,12 @@
     \item Real-world \textsc{Nginx} performance benchmarks for both low-latency and high-bandwidth configurations. (§~\ref{sec:nginx-benchmarks})
 \end{enumerate}
 
-\paragraph{}The results presented here are best compared to \textit{Flume}~\cite{flume} --- \textit{CamFlow}, although implemented similarly, has a far greater scope that this project.
+\paragraph{}The results presented here are best compared to \textit{Flume}~\cite{flume} --- \textit{CamFlow}, although implemented similarly, has a far greater scope that this project. \textit{Flume} reports $\sim 40\%$ decrease in real-world performance; we report $\sim 25\%$ (§~\ref{sec:nginx-benchmarks}).
 
 \subsection{Evaluation Environment}
 \paragraph{} The research machine used for evaluation contained a quad-core Intel® Core™ i5-6600 (which supports SGX v1), 16 GiB RAM, and a 1-Gbps NIC. The primary disk provided 389 MBps read and 210 MBps write.\footnote{As reported by the \texttt{dd} tool.} For all experiments running under \textsc{Citadel}, \texttt{citadeld} was running via \texttt{systemd} --- all debugging tools were disabled and the enclave was built in hardware pre-release mode. Linux v5.6.0 was the base kernel for all trials; \textsc{Citadel} adds its LSM on top of this.
 
-\paragraph{} Both Tables~\ref{table:syscall-microbenchmarks} and \ref{table:nginx-benchmarks} report the sample mean and standard deviation. Figures~\ref{fig:io-graph}, \ref{fig:ipc-2thread-graph}, and \ref{fig:ipc-2proc-graph} plot the sample medians and interquartile range for each point. The Wilcoxon paired signed rank test was chosen to determine statistical significance.~\cite{10.2307/3001968}
+\paragraph{} Both Tables~\ref{table:syscall-microbenchmarks} and \ref{table:nginx-benchmarks} report the sample mean and standard deviation. Figures~\ref{fig:io-graph}, \ref{fig:ipc-2thread-graph}, and \ref{fig:ipc-2proc-graph} plot the sample medians and interquartile range (IQR) for each point. The Wilcoxon paired signed rank test was chosen to determine statistical significance.~\cite{10.2307/3001968}
 
 \subsection{\textit{syscall} Microbenchmarks}
 \label{sec:syscall-microbenchmarks}
@@ -92,12 +92,12 @@
     \label{fig:io-graph}
 \end{figure}
 
-\paragraph{} A custom benchmark tool was built to assess the overall impact \textsc{Citadel} has on \textit{syscall} performance --- for example, the duration of \texttt{open()} compared to \texttt{c\_open()}. Table~\ref{table:syscall-microbenchmarks} presents these results. To give a fair comparison, two figures are reported for \textsc{Citadel}. \textit{Amortised} refers to the normal operation of \texttt{libcitadel}, in which the majority of queries are served from the cache; overhead arises from both local cache operations and added kernel latency from the LSM. The other figure, \textit{Cache Miss}, gives the overhead when caching is disabled, thus including communication with \texttt{citadeld}.
+\paragraph{} A custom benchmark tool was built to assess the overall impact \textsc{Citadel} has on \textit{syscall} performance --- for example, the duration of \texttt{open()} compared to \texttt{c\_open()}. Table~\ref{table:syscall-microbenchmarks} presents these results. To give a fair comparison, two figures are reported for \textsc{Citadel}. \textit{Amortised} refers to the normal operation of \texttt{libcitadel}, in which the majority of queries are served from the cache; overhead arises from both local cache operations and added kernel latency from the LSM. The other column, \textit{Cache Miss}, gives the overhead when caching is disabled, thus including communication with \texttt{citadeld}.
 
 \paragraph{} Overall \texttt{libcitadel} contributes $\sim{}1 \mu s$ of overhead (amortised) on average --- this rises to $\sim$~$40 \mu s$ on a cache miss. Figure~\ref{fig:open-anatomy} presents a more detailed view of where exactly this overhead arises, approximately plotting where the control flow for \texttt{c\_open()} moves (on a cache miss). Interestingly, the slowest component is the communication channel between \texttt{libcitadel} and \texttt{citadeld} ($26\mu s$ median);\footnote{Included in the \textit{Application} regions.} as a result, the core reference monitor functionality only adds a median penalty of $24\mu s$. The final \textit{Kernel} call before terminating is the internal call to \texttt{open()}. Additionally, the $10^{th}$ percentile demonstrates that the first \textit{Kernel} call is not always required if the entity's metadata is resident in the cache.
 
-\paragraph{} Figure~\ref{fig:io-graph} plots observed effective bandwidth whilst reading from and writing to a 16 MiB file with different sized buffers. The benchmark driving this was adapted for Linux from one written by R.~Watson for FreeBSD.~\cite{l41-benchmark} The results clearly show \textsc{Citadel} having a more adverse effect on performance for smaller buffer sizes; this is logical, as smaller buffers force a larger number of calls to \texttt{read()}/\texttt{write()}. The reason for \textsc{Citadel} providing better performance for large buffers with \texttt{write()} is unclear --- the difference is statistically significant (at 5\% confidence) and reproducable. More work is required to 
-narrow down the root causes, but hypotheses include the fact that regular, small delays could ease pressure on microarchitectural cache in the processor, affording slight optimisations.
+\paragraph{} Figure~\ref{fig:io-graph} plots observed effective bandwidth whilst reading from and writing to a 16 MiB file with different sized buffers; the corresponding percentage overhead inflicted by \textsc{Citadel} is plotted to the right. The benchmark driving this was adapted for Linux from one written by R.~Watson for FreeBSD.~\cite{l41-benchmark} The results clearly show \textsc{Citadel} having a more adverse effect on performance for smaller buffer sizes; this is logical, as smaller buffers force a larger number of calls to \texttt{read()} / \texttt{write()}. The reason for \textsc{Citadel} providing better performance for large buffers with \texttt{write()}, an unexpected artefact, is unclear --- the difference is statistically significant (at 5\% confidence) for buffers in the range $256$KiB and $2$ MiB, and reproducable. More work is required to 
+narrow down the root causes, but hypotheses include the fact that regular, small delays could ease pressure on microarchitectural caches in the processor, affording slight optimisations.
 
 
 
@@ -106,9 +106,9 @@ narrow down the root causes, but hypotheses include the fact that regular, small
 
 \paragraph{} Again using the modified Watson benchmark, we investigated the effect \textsc{Citadel} has on end-to-end IPC performance. We investigate \textit{pipes}, \textit{local sockets} (\texttt{socketpair()}), and \textit{regular sockets}, between 2 threads (Figure~\ref{fig:ipc-2thread-graph}) and between a parent and child process (Figure~\ref{fig:ipc-2proc-graph}).
 
-\paragraph{} Overall the results between the two contexts are similar --- both see approximately 20\% degradation in the worst cases, tending towards equal performance when using $\sim 10^5$-byte blocks. At first glance it would appear that \textsc{Citadel} affects the performance between 2 threads slightly more than 2 processes, but in fact the truth is that \textsc{Citadel} performs nearly identically in both. The native performance is more heavily optimised when sending between two threads; any latency gained by the kernel is overshadowed by \textsc{Citadel}.
+\paragraph{} Overall the results between the two contexts are similar --- both see approximately 20\% degradation in the worst cases, tending towards equal performance when using $\sim 10^5$-byte blocks. At first glance it would appear that \textsc{Citadel} affects the performance between 2 threads slightly more than 2 processes, but in fact the truth is that \textsc{Citadel} performs near-identically in both. The native performance is more heavily optimised when sending between two threads; any latency gained by the kernel is overshadowed by \textsc{Citadel}.
 
-\paragraph{} In a similar way to \texttt{write()}, \textsc{Citadel} outperforms the native kernel in both contexts using \texttt{pipe()}. The readings are noisy, but statistically significant (at 5\%) and reproducable. The causes is again unknown, but noting that the native kernel's throughput halves after buffers of 8 KiB, we highly suspect that this is the result of cache exhaustion or inopportune paging. It is also notable that readings for \textsc{Citadel} exhibit a far larger interquartile range for large buffer sizes than the native kernel, a side effect that we see repeated in real-world testing.
+\paragraph{} In a similar way to \texttt{write()}, \textsc{Citadel} unexpectedly outperforms the native kernel in both contexts using \texttt{pipe()}. The readings are noisy, but statistically significant (at 5\%) for buffers in the range 16 KiB to 8 MiB, and reproducable. The cause is again unknown, but noting that the native kernel's throughput halves after buffers of 8 KiB, we highly suspect that this is the result of cache exhaustion or inopportune paging. It is also notable that \textsc{Citadel}'s readings exhibit a far larger IQR for large buffer sizes than the native kernel, a side effect that we see repeated in real-world testing.
 
 \begin{figure}[]
     \centering
@@ -175,4 +175,11 @@ narrow down the root causes, but hypotheses include the fact that regular, small
 
 \paragraph{} Two trials were run; a low-latency benchmark\footnote{\url{https://github.com/wg/wrk}} and a 10GB HTTP file transfer (high-bandwidth). The webserver was configured to only run a single server process to ensure it was exercised to its full extent, and was setup to use the \textit{loopback} interface\footnote{\texttt{http://127.0.0.1/}.} to eliminate any interference from outside the OS. 
 
-\paragraph{} The results, displayed in Table~\ref{table:nginx-benchmarks}, are not suprising. For the low latency tests we observe the same 20-25\% overhead as seen from TCP sockets in §~\ref{sec:ipc-microbenchmarks} using the same buffer size. The high-bandwidth tests show \textsc{Citadel} performing equally as the native kernel, only differing in that it had a larger sample standard deviation. The large file transfer is also interesting as it is the first time we see file descriptor revalidation happening automatically in the wild on \texttt{read()} and \texttt{write()} being called. 
+\paragraph{} The results, displayed in Table~\ref{table:nginx-benchmarks}, are not suprising. For the low latency tests we observe the same $20-25$\% overhead as seen from TCP sockets in §~\ref{sec:ipc-microbenchmarks} using the same buffer size. The high-bandwidth tests show \textsc{Citadel} performing equally to the native kernel, only differing in that it had a larger sample standard deviation. The large file transfer is also interesting as it is the first time we see file descriptor revalidation happening automatically in the wild on \texttt{read()} and \texttt{write()}. 
+
+
+
+
+
+\section{Security}
+\section{Expressivity}
