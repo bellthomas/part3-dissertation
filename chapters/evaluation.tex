@@ -182,4 +182,39 @@ narrow down the root causes, but hypotheses include the fact that regular, small
 
 
 \section{Security}
+
+\subsection{\textsc{Citadel} TCB}
+
+\paragraph{} One of the core initial goals of this project was to build an enclave-based reference monitor whilst \textit{minimising inflation to the system's TCB}; to this end we present the trusted components of a \textsc{Citadel} system.
+
+\begin{itemize}
+    \item[---] The SGX Platform, including all libraries and \textit{isgx}. 
+    \item[---] The \textit{policy enclave} implementation.
+    \item[---] The untrusted \texttt{citadeld} application; discussed further below.
+    \item[---] The core Linux kernel, including the \textsc{Citadel} LSM.   
+    \item[---] The Intel AESNI Linux driver. 
+\end{itemize}
+
+\paragraph{} Essentially, we assume that the build environment is entirely trusted; preparation need not be done on the final system. A notable exclusion is the vast majority of Linux drivers and other kernel modules; this was a strong motivation for using SGX, as it can effectively defend against malicious and misbehaving ring-0 parties. However, as it currently stands, there are security questions so far unanswered;
+
+\begin{enumerate}
+    \item How does the system defend against \texttt{citadeld}, an unprivileged, userspace application, from being replaced by a malicious adversary?
+    \item Can the kernel actually be held to the same integrity level as an enclave? Additionally, by extension, how trustable is a system that enclaves can only attest to half of?
+\end{enumerate}
+
+\paragraph{} To the first question we present a proposed solution. In exactly the same way as \textsc{Citadel} defends its socket, \texttt{/run/citadel.socket}, with a reserved identifier, the compiled \texttt{citadeld} application may be protected in kind. For example, opting to mark it with an \textit{xattr} such as \texttt{security.citadel.daemon} during the build process would provide the LSM ample confidence that an executable is a valid product of a \textsc{Citadel} build,\footnote{Using the \texttt{bprm\_check\_security} LSM hook.} and protect it from tampering while resident on the end system. This may also be valuable for defending the enclave object files themselves; although they cannot be tampered with, an adversary may try to remove them in the interest of denying service. These features would require extending the \textsc{Citadel} build system beyond its current state.
+
+\paragraph{} To the second question we provide a discussion; in short, no, but if the correct measures are taken any risks can be minimised. Enclaves are unique in that their online attestation process inspires absolute trust, but offline provenance will help here. Although not SGX-based, \textit{UEFI Secure Boot}~\cite{Richardson2013UefiSB} is an industry-standard mechanism for verifying that an OS is legitimate. Ensuring that a \textsc{Citadel} system's installation is properly signed by a trusted party defends against an entire host of attacks. One such attack, that the \textsc{Citadel} system cannot defend itself against, has a malicious superuser compiling a new kernel with a modified LSM, using the keys scraped from the Linux boot binary, and booting into it to bypass \textsc{Citadel}'s protections. Although not a bespoke solution, verifying an OS is well-explored and thus not a direct concern for this work.
+
+\paragraph{} Another question, though, asks whether the core kernel protects itself adequately from malicious kernel module --- \textit{it is questionable}. Appendix~\ref{appendix:pid-tampering} presents a proof of concept kernel module that changes a process's PID dynamically. This is highly concerning, as a process's PID is it's core identifier in \textsc{Citadel}'s eyes; defence against this is discussed in §~\ref{sec:pid-protection}. The Linux kernel is a soup of \textit{exported} and \textit{unexported symbols},\footnote{Symbols include functions and variables held in the global namespace; exporting is the process of exposing it publicly to be called by third parties.} which is exploitable to access internal functions never designed to be called from a different context. This work does not assess the bearing this may have on the LSM framework, but highlights the potential need for \textit{defensive programming} when designing the LSM. This form of defence is absolutely possible, but must be seriously considered.
+
+\paragraph{} Thus we firmly believe that \textsc{Citadel}, with its restricted TCB, is trustworthy, creating a system of integrity checks based upon, and complimenting, the trust placed in SGX itself.
+
+\subsection{IFC Model Implications}
+
+\subsection{Use Cases}
+
+\paragraph{} A short discussion... by no means a full proof. No ambiguity between the decision of the policy enclave and the LSM enforcement engine.
 \section{Expressivity}
+
+\paragraph{} Short justification that CamFlow parameterisable models are implementable.

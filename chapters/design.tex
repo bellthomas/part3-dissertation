@@ -395,6 +395,7 @@ uint64_t pid = cred.pid;
 \end{minted}
 
 \subsubsection{PID Protection}
+\label{sec:pid-protection}
 \paragraph{} The LSM also implements a mechanism to detect PID forgery --- as shown in Appendix~\ref{appendix:pid-tampering}, it is theoretically possible for a process to modify its PID with the help of a malicious kernel module. This, if unchecked, would be detrimental for the LSM's integrity, as it would allow a process to silently assume the identity of another. To this end, the LSM stores a process's PID within its security structure and routinely checks to ensure it does not change unexpectedly.\footnote{A valid change would be on \texttt{fork()}, in which case the stored PID should equal the parent process's.} Any process deemed to have an illegitimate PID is denied access to all entities, effectively killing it.
 
 \subsection{\textsc{Citadel} Build System}
