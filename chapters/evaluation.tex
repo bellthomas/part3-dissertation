@@ -1,4 +1,33 @@
-\paragraph{} 
+\paragraph{} Three core questions hang over \textsc{Citadel}'s viability --- its security, expressivity, and performance. This chapter presents a thorough investigation of the prototype's performance profile, a discussion around its security implications, and an illustrative example in favour of its expressability.
+
+\section{Performance}
+\label{sec:performance}
+
+\paragraph{} The \textsc{Citadel} prototype demonstrates highly impressive performance, matching, and in places surpassing, related approaches, despite the architectural disadvantage it is at. We present its behaviour relative to native Linux kernel in three ways;
+
+\begin{enumerate}
+    \item Application-level microbenchmarks, tracing the duration of \textit{syscalls} both natively and through \texttt{libcitadel}. (§~\ref{sec:syscall-microbenchmarks})
+    \item IPC bandwidth microbenchmarks in both \textit{intra-} and \textit{inter-}process contexts. (§~\ref{sec:ipc-microbenchmarks})
+    \item Real-world \textsc{Nginx} performance benchmarks for both low-latency and high-bandwidth configurations. (§~\ref{sec:nginx-benchmarks})
+\end{enumerate}
+
+\paragraph{}The results presented here are best compared to \textit{Flume}~\cite{flume} --- \textit{CamFlow}, although implemented similarly, has a far greater scope that this project.
+
+\subsection{Evaluation Environment}
+\paragraph{} The research machine used for evaluation contained a quad-core Intel® Core™ i5-6600 (which supports SGX v1), 16 GiB RAM, and a 1-Gbps NIC. The primary disk provided 389 MBps read and 210 MBps write.\footnote{As reported by the \texttt{dd} tool.} For all experiments running under \textsc{Citadel}, \texttt{citadeld} was running via \texttt{systemd} --- all debugging tools were disabled and the enclave was built in hardware pre-release mode. Linux v5.6.0 was the base kernel for all trials; \textsc{Citadel} adds its LSM on top of this.
+
+\paragraph{} Both Tables~\ref{table:syscall-microbenchmarks} and \ref{table:nginx-benchmarks} report the sample mean and standard deviation. Figures~\ref{fig:io-graph}, \ref{fig:ipc-2thread-graph}, and \ref{fig:ipc-2proc-graph} plot the sample medians and interquartile range for each point. The Wilcoxon paired signed rank test was chosen to determine statistical significance.~\cite{10.2307/3001968}
+
+\subsection{\textit{syscall} Microbenchmarks}
+\label{sec:syscall-microbenchmarks}
+
+\begin{figure}[]
+    \centering
+    \includegraphics[width=\linewidth]{figures/graphs/open-anatomy.pdf}
+    \vspace{-5mm}
+    \caption{Control flow inhabitation for \texttt{libcitadel}'s \texttt{c\_open()} function, $n=100$.}
+    \label{fig:open-anatomy}
+\end{figure}
 
 
 \begin{table}
@@ -50,8 +79,15 @@
     \end{tabular}
     \vspace{5mm}
     \captionsetup{justification=centering}
-    \caption[\texttt{libcitadel} microbenchmarks]{\texttt{libcitadel} microbenchmarks. \\ All values are in $\mu s$ and the sample standard deviation is shown alongside the mean. For \textsc{Citadel}, both the amortised and average cache-miss durations are given. Only one value is given if the operation is not affects by a cache miss. $n=10^6$.}
+    \caption[\texttt{libcitadel} microbenchmarks]{\texttt{libcitadel} microbenchmarks. \\ All values are in $\mu s$ and the sample standard deviation is shown alongside the mean. For \textsc{Citadel}, both the amortised and average cache-miss durations are given. Only one value is given if the operation is not affected by a cache miss. $n=10^6$.}
+    \label{table:syscall-microbenchmarks}
 \end{table}
+
+\paragraph{} A custom benchmark tool was built to assess the overall impact \textsc{Citadel} has on \textit{syscall} performance --- for example, the duration of \texttt{open()} compared to \texttt{c\_open()}. Table~\ref{table:syscall-microbenchmarks} presents these results. To give a fair comparison, two figures are reported for \textsc{Citadel}. \textit{Amortised} refers to the normal operation of \texttt{libcitadel}, in which the majority of queries are served from the cache; overhead arises from both local cache operations and added kernel latency from the LSM. The other figure, \textit{Cache Miss}, gives the overhead when caching is disabled, thus including communication with \texttt{citadeld}.
+
+\paragraph{} Overall \texttt{libcitadel} contributes $\sim{}1 \mu s$ of overhead (amortised) on average --- this rises to $\sim$~$40 \mu s$ on a cache miss. Figure~\ref{fig:open-anatomy} presents a more detailed view of where exactly this overhead arises, approximately plotting where the control flow for \texttt{c\_open()} moves (on a cache miss). Interestingly, the slowest component is the communication channel between \texttt{libcitadel} and \texttt{citadeld} ($26\mu s$ median);\footnote{Included in the \textit{Application} regions.} as a result, the core reference monitor functionality only adds a median penalty of $24\mu s$. The final \textit{Kernel} call before terminating is the internal call to \texttt{open()}.
+
+\paragraph{} Figure~\ref{fig:io-graph}
 
 \begin{figure}[]
     \centering
@@ -62,6 +98,9 @@
     \label{fig:io-graph}
 \end{figure}
 
+
+\subsection{IPC Microbenchmarks}
+\label{sec:ipc-microbenchmarks}
 
 \begin{figure}[]
     \centering
@@ -80,14 +119,9 @@
     \label{fig:ipc-2proc-graph}
 \end{figure}
 
-\begin{figure}[]
-    \centering
-    \includegraphics[width=\linewidth]{figures/graphs/open-anatomy.pdf}
-    \vspace{-5mm}
-    \caption{Control flow inhabitation for \texttt{libcitadel}'s \texttt{open()} function, $n=100$.}
-    \label{fig:open-anatomy}
-\end{figure}
 
+\subsection{\textsc{Nginx} Benchmarks}
+\label{sec:nginx-benchmarks}
 \begin{table}
     \centering
     \newcommand\tableTop{\rule{0pt}{3ex}}
@@ -125,4 +159,5 @@
     \vspace{5mm}
     \captionsetup{justification=centering}
     \caption{\textsc{Nginx} performance comparinson between native Linux, and both untainted and tainted \textsc{Citadel}, $n=25$.}
+    \label{table:nginx-benchmarks}
 \end{table}

@@ -335,7 +335,7 @@ int c_open(const char *pathname, int oflag, mode_t mode) {
     bool creating = access(pathname, F_OK) < 0 && (oflag & O_CREAT) > 0;
     
     // Pre-emptively attempt access if I suspect I'm not tainted.
-    // Alteratively, register a transient file is we're creating it.
+    // Alteratively, register a transient file if we're creating it.
     // -- close and reopen to ensure it is independently tagged.
     if (!am_tainted() || creating) {
         fd = open(pathname, oflag, mode);
@@ -343,7 +343,8 @@ int c_open(const char *pathname, int oflag, mode_t mode) {
             return fd;
         if (fd == -1 && errno != -EPERM)
             return -1;
-        close(fd);
+        if (fd != -1)
+            close(fd);
     }
 
     // Request access from the policy enclave. Claim file if not tagged.
@@ -352,7 +353,7 @@ int c_open(const char *pathname, int oflag, mode_t mode) {
 
     // Continue as normal.
     fd = open(pathname, oflag, mode);
-    if (!from_cache) citadel_declare_fd(fd, CITADEL_OP_OPEN);
+    citadel_declare_fd(fd, CITADEL_OP_OPEN);
     if (!am_tainted()) set_taint();
     return fd;
 }
