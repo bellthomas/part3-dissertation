@@ -1,4 +1,4 @@
-\paragraph{} Three core questions hang over \textsc{Citadel}'s viability --- its security, expressivity, and performance. This chapter presents a thorough investigation of the prototype's performance profile, a discussion around its security implications, and an illustrative example in favour of its expressability.
+\paragraph{} Three core questions hang over \textsc{Citadel}'s viability --- its security, expressivity, and performance. This chapter presents a thorough investigation of the prototype's performance profile and a discussion around its security implications and application to real-world scenarios.
 
 \section{Performance}
 \label{sec:performance}
@@ -206,15 +206,25 @@ narrow down the root causes, but hypotheses include the fact that regular, small
 
 \paragraph{} To the second question we provide a discussion; in short, no, but if the correct measures are taken any risks can be minimised. Enclaves are unique in that their online attestation process inspires absolute trust, but offline provenance will help here. Although not SGX-based, \textit{UEFI Secure Boot}~\cite{Richardson2013UefiSB} is an industry-standard mechanism for verifying that an OS is legitimate. Ensuring that a \textsc{Citadel} system's installation is properly signed by a trusted party defends against an entire host of attacks. One such attack, that the \textsc{Citadel} system cannot defend itself against, has a malicious superuser compiling a new kernel with a modified LSM, using the keys scraped from the Linux boot binary, and booting into it to bypass \textsc{Citadel}'s protections. Although not a bespoke solution, verifying an OS is well-explored and thus not a direct concern for this work.
 
-\paragraph{} Another question, though, asks whether the core kernel protects itself adequately from malicious kernel module --- \textit{it is questionable}. Appendix~\ref{appendix:pid-tampering} presents a proof of concept kernel module that changes a process's PID dynamically. This is highly concerning, as a process's PID is it's core identifier in \textsc{Citadel}'s eyes; defence against this is discussed in §~\ref{sec:pid-protection}. The Linux kernel is a soup of \textit{exported} and \textit{unexported symbols},\footnote{Symbols include functions and variables held in the global namespace; exporting is the process of exposing it publicly to be called by third parties.} which is exploitable to access internal functions never designed to be called from a different context. This work does not assess the bearing this may have on the LSM framework, but highlights the potential need for \textit{defensive programming} when designing the LSM. This form of defence is effective and possible, but must be considered seriously.
+\paragraph{} Another question, though, asks whether the core kernel protects itself adequately from malicious kernel module --- our response, \textit{to an extent}. Appendix~\ref{appendix:pid-tampering} presents a proof of concept kernel module that changes a process's PID dynamically. This is highly concerning, as a process's PID is it's core identifier in \textsc{Citadel}'s eyes; defence against this is discussed in §~\ref{sec:pid-protection}. The Linux kernel is a soup of \textit{exported} and \textit{unexported symbols},\footnote{Symbols include functions and variables held in the global namespace; exporting is the process of exposing it publicly to be called by third parties.} which is exploitable to access internal functions never designed to be called from a different context. This work does not assess the bearing this may have on the LSM framework, but highlights the potential need for \textit{defensive programming} when designing the LSM. Such protection is effective and possible, but must be considered seriously.
 
-\paragraph{} Thus we firmly believe that \textsc{Citadel}, with its restricted TCB, is trustworthy, creating a system of integrity checks based upon, and complimenting, the trust placed in SGX itself.
+\paragraph{} Thus we firmly believe that \textsc{Citadel}, with its restricted TCB, is trustworthy, creating a system of integrity checks based upon, and complementing, the trust placed in SGX itself.
 
 \subsection{IFC Model Implications}
 
+\paragraph{} The \textsc{Citadel} IFC model deviates from the designs and implementations of Pasquier et al. and Krohn et al. in three key ways;
+\begin{enumerate}
+    \item Policy and enforcement decision are separated.
+    \item Pasive entities may exist in a temporary \textit{transient} state.
+    \item Operations between untainted entities are not mediated.
+\end{enumerate}
+
+\paragraph{} The first is handled with an extension to the core model to make policy decisions explicit and communicable (§~4.X). This relationship is the core focus of this work, and \textsc{Citadel} at all points relies on conservative assumptions --- if not explicitly granted, permission is witheld. The system tends towards a state of complete lockdown,\footnote{For restircted entities.} a defensive measure to preserve \textit{safety} in the face of denial of service.
+
+\paragraph{} The second point is justified with a logical extension to the \textit{creation flow} rule (§~2.X, (2.1)). Transient entities are only created from a secure context, under which it automatically assumes the labellings of its parent entity. This may informally be considered an extension of the process's internal state, and held to the same restrictions. It is only permitted to alter its security context (via another active entity) after being declared explicitly, leaving its transient state. 
+
+\paragraph{} To the final point we offer the following --- tainting in \textsc{Citadel} assumes the worst, treating any potential infraction as cause for mediation; only the policy enclave may clear a taint. Assuming that all sensitive entities are correctly labelled, \textsc{Citadel} will protect them against anything within the system. Unlabelled entities are assumed to be in the public domain, and allows normal execution and access control to proceed until the taint boundary is crossed.
+
 \subsection{Use Cases}
 
-\paragraph{} A short discussion... by no means a full proof. No ambiguity between the decision of the policy enclave and the LSM enforcement engine.
-\section{Expressivity}
-
-\paragraph{} Short justification that CamFlow parameterisable models are implementable.
+\paragraph{} In this dissertation's introduction we laid out the motivation and goals for \textsc{Citadel}, including a desire to use this as a platform for reasoning about the relationship between an enclave and its host.
