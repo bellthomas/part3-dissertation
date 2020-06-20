@@ -1,8 +1,8 @@
 \paragraph{} This dissertation presented \textsc{Citadel}, a modular, enclave-backed reference monitor to securely and verifiably implement IFC methods in the Linux kernel. By separating policy decisions and enforcement, we have demonstrated a feasible approach to deep kernel integration using Intel SGX; the prototype leverages Linux's security framework to realise decisions at the lowest level of the OS. \textsc{Citadel} optimises for performance via an auxiliary library, which conservatively predicts a process's security context, enabling unobtrusive application integration.
 
-\paragraph{} A full implementation of the \textsc{Nginx} webserver running on \textsc{Citadel} grounds this work with real-world performance benchmarks; in the most punitive trial a 25\% overhead was observed, but other scenarios reported performance parity with the native Linux kernel.
+\paragraph{} A full implementation of the \textsc{Nginx} webserver running on \textsc{Citadel} validates this work using real-world performance benchmarks; in the most punitive trial a 25\% overhead was observed, but other scenarios reported performance parity with the native Linux kernel.
 
-\paragraph{} Reinforcing and validating the methods presented here should be the next step in this area, but an extension of \textsc{Citadel} into a distributed setting also has great potential; inter-machine attestation will likely establish a degree of trust between components that is unrivalled.
+\paragraph{} Verifying the methods presented here should be the next step, but an extension of \textsc{Citadel} in a distributed setting also has great potential; inter-machine attestation will likely establish an exceptional degree of trust between remote components.
 
 
-\paragraph{} There is a long way to go before \textsc{Citadel} is fully-realised and production-ready, but this project has successfully demonstrated the viability and potential of a symbiotic enclave-kernel relationship, which, in the long term, may prove valuable for both.
+\paragraph{} There is a long way to go before \textsc{Citadel} is fully realised and production-ready, but this project successfully demonstrates the viability and potential of a symbiotic enclave-kernel relationship, which, in the long run, may prove valuable for both.
