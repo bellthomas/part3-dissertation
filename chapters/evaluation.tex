@@ -96,8 +96,7 @@
 
 \paragraph{} Overall \texttt{libcitadel} contributes $\sim{}1 \mu s$ of overhead (amortised) on average --- this rises to $\sim$~$40 \mu s$ on a cache miss. Figure~\ref{fig:open-anatomy} presents a more detailed view of where exactly this overhead arises, approximately plotting where the control flow for \texttt{c\_open()} moves (on a cache miss). Interestingly, the slowest component is the communication channel between \texttt{libcitadel} and \texttt{citadeld} ($26\mu s$ median);\footnote{Included in the \textit{Application} regions.} as a result, the core reference monitor functionality only adds a median penalty of $24\mu s$. The final \textit{Kernel} call before terminating is the internal call to \texttt{open()}. Additionally, the $10^{th}$ percentile demonstrates that the first \textit{Kernel} call is not always required if the entity's metadata is resident in the cache.
 
-\paragraph{} Figure~\ref{fig:io-graph} plots observed effective bandwidth whilst reading from and writing to a 16 MiB file with different sized buffers; the corresponding percentage overhead inflicted by \textsc{Citadel} is plotted to the right. The benchmark driving this was adapted for Linux from one written by R.~Watson for FreeBSD.~\cite{l41-benchmark} The results clearly show \textsc{Citadel} having a more adverse effect on performance for smaller buffer sizes; this is logical, as smaller buffers force a larger number of calls to \texttt{read()} / \texttt{write()}. The reason for \textsc{Citadel} providing better performance for large buffers with \texttt{write()}, an unexpected artefact, is unclear --- the difference is statistically significant (at 5\% confidence) for buffers in the range $256$KiB and $2$ MiB, and reproducable. More work is required to 
-narrow down the root causes, but hypotheses include the fact that regular, small delays could ease pressure on microarchitectural caches in the processor, affording slight optimisations.
+\paragraph{} Figure~\ref{fig:io-graph} plots observed effective bandwidth whilst reading from and writing to a 16 MiB file with different sized buffers; the corresponding percentage overhead inflicted by \textsc{Citadel} is plotted to the right. The benchmark driving this was adapted for Linux from one written by R.~Watson for FreeBSD.~\cite{l41-benchmark} The results clearly show \textsc{Citadel} having a more adverse effect on performance for smaller buffer sizes; this is logical, as smaller buffers force a larger number of calls to \texttt{read()} / \texttt{write()}. The reason for \textsc{Citadel} providing better performance for large buffers with \texttt{write()}, an unexpected artefact, is unclear --- the difference is statistically significant (at 5\% confidence) for buffers in the range $256$KiB and $2$ MiB, and reproducible. More work is required to narrow down the root causes, but hypotheses include the fact that regular, small delays could ease pressure on microarchitectural caches in the processor, affording slight optimisations.
 
 
 
@@ -219,12 +218,32 @@ narrow down the root causes, but hypotheses include the fact that regular, small
     \item Operations between untainted entities are not mediated.
 \end{enumerate}
 
-\paragraph{} The first is handled with an extension to the core model to make policy decisions explicit and communicable (§~4.X). This relationship is the core focus of this work, and \textsc{Citadel} at all points relies on conservative assumptions --- if not explicitly granted, permission is witheld. The system tends towards a state of complete lockdown,\footnote{For restircted entities.} a defensive measure to preserve \textit{safety} in the face of denial of service.
+\paragraph{} The first is handled with an extension to the core model to make policy decisions explicit and communicable (§~4.X). This relationship is the core focus of this work, and \textsc{Citadel} at all points relies on conservative assumptions --- if not explicitly granted, permission is witheld. The system tends towards a state of complete lockdown,\footnote{For restricted entities.} a defensive measure to preserve \textit{safety} in the face of denial of service.
 
-\paragraph{} The second point is justified with a logical extension to the \textit{creation flow} rule (§~2.X, (2.1)). Transient entities are only created from a secure context, under which it automatically assumes the labellings of its parent entity. This may informally be considered an extension of the process's internal state, and held to the same restrictions. It is only permitted to alter its security context (via another active entity) after being declared explicitly, leaving its transient state. 
+\paragraph{} The second point is justified with a logical extension to the \textit{creation flow} rule (§~\ref{sec:permissible-operations}, (\ref{eqn:new-creation})). Transient entities are only created from a secure context, under which it automatically assumes the labellings of its parent entity. This may informally be considered an extension of the process's internal state, and held to the same restrictions. It is only permitted to alter its security context (via another active entity) after being declared explicitly, leaving its transient state. 
 
 \paragraph{} To the final point we offer the following --- tainting in \textsc{Citadel} assumes the worst, treating any potential infraction as cause for mediation; only the policy enclave may clear a taint. Assuming that all sensitive entities are correctly labelled, \textsc{Citadel} will protect them against anything within the system. Unlabelled entities are assumed to be in the public domain, and allows normal execution and access control to proceed until the taint boundary is crossed.
 
+\subsection{SGX Vulnerabilities}
+\label{sec:sgx-vulnerabilities}
+\paragraph{} This work assume that the SGX platform is itself secure; a successful attack on SGX obviously compromises any protection offered by \textsc{Citadel}. A number of SGX vulnerabilities have been detailed in recent works;~\cite{lipp2018meltdown, vanbulck2018foreshadow, Schwarz2019ZombieLoad, ridl, vanbulck2020lvi} these are effective and highly concerning, but mitigating them is not in the scope of this project.
+
 \subsection{Use Cases}
 
-\paragraph{} In this dissertation's introduction we laid out the motivation and goals for \textsc{Citadel}, including a desire to use this as a platform for reasoning about the relationship between an enclave and its host.
+\paragraph{} In this dissertation's introduction, we laid out the motivation and goals for \textsc{Citadel}, including a desire to use this as a platform for reasoning about the relationship between an enclave and its host. A standard workflow for creating SGX application is to use a library OS, such as \textit{SGX-LKL}~\cite{priebe2019sgxlkl} and \textit{Graphene-SGX},~\cite{203255} which creates a synthetic Linux environment inside the enclave to support the primary application --- it could be argued that this approach inflates the enclave with the same flaws and issues as the underlying OS. Could we reach a point where the host OS is trusted to hold custody of sensitive assets?
+
+\paragraph{} This section shall focus on two hypothetical scenarios --- one requiring secrecy, and one integrity --- to illustrate how \textsc{Citadel} could aid enclave-application development.
+
+\paragraph{Scenario 1} A social-media company provides a GDPR platform, through which members request an archive of their data and other assets; these may be over 10~GB. Processing and collation happen inside an enclave, and an external service authenticates requests. Must the enclave seal archives after creation and unseal them when requested? A solution using \textsc{Citadel} may offload unencrypted archives to the custody of the host OS, using IFC's secrecy mechanic to prevent unauthorised release. On request, the webserver requests permission to declassify the archive from the authentication authority --- no penalty need be paid for encryption.\footnote{Disk encryption could be used for offline protection.}
+
+
+\paragraph{Scenario 2} a
+
+
+---
+
+Trust the underlying system to handle data in flight?
+
+
+
+\textit{Further, it aims to reason what the future relationship between an OS and the enclaves it hosts should be, and whether complete isolation between them is the natural answer in a number of common situations.}

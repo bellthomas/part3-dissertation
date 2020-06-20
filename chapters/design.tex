@@ -63,7 +63,7 @@
 
 \paragraph{} An additional challenge is one of incomplete information --- an enclave will not be privy to internal kernel datastructures such as \texttt{task\_struct}, which will store the taint and capabilities of processes. A potential solution would be to implement a request---response model via a custom kernel interface for any queries, though the performance impact would be severe, requiring additional context switches. Instead, the approach adopted creates an abstract interface that purposefully removes the minutiae of the underlying system. Any solution must be trustworthy and safe, and malicious entities must not be able to exploit any \textit{eventually consistent} components.~\cite{10.1145/1435417.1435432}
 
-\paragraph{} As a final comment, it must be noted that SGX is not without its flaws; §~5.X discusses this and its impact on the project.
+\paragraph{} As a final comment, it must be noted that SGX is not without its flaws; §~\ref{sec:sgx-vulnerabilities} discusses this and its impact on the project.
 
 
 % ---------------
