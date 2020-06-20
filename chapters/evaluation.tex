@@ -230,20 +230,13 @@
 
 \subsection{Use Cases}
 
-\paragraph{} In this dissertation's introduction, we laid out the motivation and goals for \textsc{Citadel}, including a desire to use this as a platform for reasoning about the relationship between an enclave and its host. A standard workflow for creating SGX application is to use a library OS, such as \textit{SGX-LKL}~\cite{priebe2019sgxlkl} and \textit{Graphene-SGX},~\cite{203255} which creates a synthetic Linux environment inside the enclave to support the primary application --- it could be argued that this approach inflates the enclave with the same flaws and issues as the underlying OS. Could we reach a point where the host OS is trusted to hold custody of sensitive assets?
+\paragraph{} In this dissertation's introduction, we laid out the motivation and goals for \textsc{Citadel}, including a desire to use this as a platform for reasoning about the relationship between an enclave and its host. A standard workflow for creating an SGX application is to use a library OS, such as \textit{SGX-LKL}~\cite{priebe2019sgxlkl} and \textit{Graphene-SGX},~\cite{203255} which creates a synthetic Linux environment inside the enclave to support the primary application --- it could be argued that this approach subjects the enclave to some of the same flaws and issues as the underlying OS. Could we reach a point where the host OS is trusted to hold custody of sensitive assets, instead of a trend toward pure isolation?
 
-\paragraph{} This section shall focus on two hypothetical scenarios --- one requiring secrecy, and one integrity --- to illustrate how \textsc{Citadel} could aid enclave-application development.
+\paragraph{} Two hypothetical scenarios are presented --- one requiring secrecy, and one integrity --- to illustrate how \textsc{Citadel} could aid enclave-application development.
 
-\paragraph{Scenario 1} A social-media company provides a GDPR platform, through which members request an archive of their data and other assets; these may be over 10~GB. Processing and collation happen inside an enclave, and an external service authenticates requests. Must the enclave seal archives after creation and unseal them when requested? A solution using \textsc{Citadel} may offload unencrypted archives to the custody of the host OS, using IFC's secrecy mechanic to prevent unauthorised release. On request, the webserver requests permission to declassify the archive from the authentication authority --- no penalty need be paid for encryption.\footnote{Disk encryption could be used for offline protection.}
-
-
-\paragraph{Scenario 2} a
+\paragraph{Scenario 1} A social-media company provides a GDPR platform, through which members request an archive of their data and other assets; these may be over 10~GB. Processing and collation happen inside an enclave, and an external service authenticates requests. Must the enclave seal archives after creation, before storage, and unseal them when requested? A solution using \textsc{Citadel} may offload unencrypted archives to the custody of the host OS, using IFC's secrecy mechanic to prevent unauthorised release. On request, the webserver requests permission to declassify the archive from the authentication authority --- no penalty need be paid for encryption.\footnote{Disk encryption should be used for offline protection.}
 
 
----
+\paragraph{Scenario 2} An Apache Spark application partitions input data into a large number of shards. Assuming that shard-processing is protected inside an enclave, do shards need to be cryptographically signed to verify their provenance? \textsc{Citadel} would entrust this tracking to the policy enclave, which, once attested may be considered a part of the application's trusted components.
 
-Trust the underlying system to handle data in flight?
-
-
-
-\textit{Further, it aims to reason what the future relationship between an OS and the enclaves it hosts should be, and whether complete isolation between them is the natural answer in a number of common situations.}
+\paragraph{} Although \textsc{Citadel} may not be suitable for the most sensitive processing tasks --- enclaves are still a vital here --- it offers a lightweight protection mechanism that could potentially be, in the interest of performance, trusted in a supporting role.
