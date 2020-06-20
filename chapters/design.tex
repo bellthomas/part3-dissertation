@@ -181,7 +181,7 @@
 
 \paragraph{Analogy} The system is well modelled by the \textit{will-call} system used by theatres and the like --- clients (\textit{processes}) reserve tickets (\textit{permission}) to attend a show (\textit{perform an operation}) ahead of time via phone or the internet (\texttt{citadeld}), but only receive their tickets (\textit{reservations}) at the venue (\textit{LSM}) on the day (\textit{at the point of execution}).
 
-\paragraph{} \textsc{Citadel}'s LSM comprise its \textit{enforcement domain} (§~\ref{sec:enforcement-domain}), and \texttt{citadeld} its \textit{policy domain} (§~\ref{sec:policy-enclave}). Enforcement is \textit{policy-agnostic}, implementing an abstract, tagged taint tracking system that exposes decision points to policy influence via reservations. In contrast, policy components need not be aware of the exact enforcement strategy to successfully express their protection schemes. Communication between the two domains is discussed separately in §~\ref{sec:interdomain-comms}.
+\paragraph{} \textsc{Citadel}'s LSM comprises its \textit{enforcement domain} (§~\ref{sec:enforcement-domain}), and \texttt{citadeld} its \textit{policy domain} (§~\ref{sec:policy-enclave}). Enforcement is \textit{policy-agnostic}, implementing an abstract, tagged taint tracking system that exposes decision points to policy influence via reservations. In contrast, policy components need not be aware of the exact enforcement strategy to successfully express their protection schemes. Communication between the two domains is discussed separately in §~\ref{sec:interdomain-comms}.
 
 
 
@@ -195,7 +195,7 @@
     \label{fig:taint-boundary}
 \end{figure}
 
-\paragraph{} The \textsc{Citadel} LSM tracks all entities within the Linux system by allocating and attaching a small data structure ($<48$ bytes) to each; it computes and tracks a conservative notion of \textit{taint} for each to ensure \textit{safety}. Tainting in \textsc{Citadel} is dynamic, meaning that entities are only policed if there is a reason. This process is \textit{additive}, only tainting an object if it is involved in a successful operation crossing the taint boundary (Figure~\ref{fig:taint-boundary}); this includes the child process created when a tainted process calls \texttt{fork()}. In additional to automatic propagation, taint for the majority of entities is amendable on request from the policy domain.
+\paragraph{} The \textsc{Citadel} LSM tracks all entities within the Linux system by allocating and attaching a small data structure ($<48$ bytes) to each; it computes and tracks a conservative notion of \textit{taint} for each to ensure \textit{safety}. Tainting in \textsc{Citadel} is dynamic, meaning that entities are only policed if there is a reason. This process is \textit{additive}, only tainting an object if it is involved in a successful operation crossing the taint boundary (Figure~\ref{fig:taint-boundary}). In additional to automatic propagation, taint for the majority of entities is amendable on request from the policy domain.
 
 \paragraph{} Recalling that entities can either be \textit{active} or \textit{passive}, a variety of metadata is tracked for each.
 
@@ -212,7 +212,7 @@
 
 
 \subsubsection{Permissions} 
-\paragraph{} Tainted processes must hold a valid reservation in their reservation list to perform any operation that may allow data to flow to another entity; the code for this check is attached in Appendix X for reference, but strictly follows the formal rules presented in §~\ref{sec:permissible-operations}. Untainted processes bypass all checks, and thus lie outside the IFC model; the security implications of this are discussed in §~4.X.
+\paragraph{} Tainted processes must hold a valid reservation in their reservation list to perform any operation that may allow data to flow to another entity; the code for this check is attached in Appendix X for reference, but strictly follows the formal rules presented in §~\ref{sec:permissible-operations}. Untainted processes bypass all checks, and thus lie outside the IFC model; the security implications of this are discussed in §~\ref{sec:ifc-model-implications}
 
 
 \subsubsection{Reservation Cache} 
@@ -270,6 +270,7 @@ citadel_response_t asm_handle_request (pid_t pid,
 
 
 \subsubsection{Host Application}
+
 \paragraph{} Before requests are presented to the resident policy module (§~\ref{sec:interdomain-comms}), various steps need to be taken in preparation. Requests often refer to absolute filepaths, creating a need to retrieve their tags, if they exist --- these requests are served by the security \textit{xattrs} attached to the VFS file. Translation is performed pre-emptively depending on the operation requested, and to minimise any lookup overhead, results are cached in a \textit{translation cache}. This is implemented using \textit{sparsehash},\footnote{\url{https://github.com/sparsehash/sparsehash}} and great care is taken to detect stale entities that may confuse the internal decision process.
 
 

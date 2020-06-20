@@ -28,7 +28,7 @@
 
 \paragraph{} A DIFC system relies on \textit{tags} and \textit{labels} to annotate the entities it tracks. Let $\mathcal{T}$ be a large set of opaque tokens, or \textit{tags}. An individual tag does not carry any particular meaning by itself, but is used as an abstract identifier for the integrity or secrecy of an entity's \textit{security context}. A \textit{label}, $l \subseteq \mathcal{T}$, is a collection of tags that are concretely attached to assets, such as files; these form a lattice under the subset-relation partial order. For each process $a$ there are two labels, one for secrecy, $a_s$, and one for integrity, $a_i$. For a tag $t$, $t \in a_s$ implies, conservatively, that process $a$ has seen information associated with tag $t$. Likewise, $t \in a_i$ indicates that every input to $a$ has been endorsed for an integrity level marked with $t$.
 
-\paragraph{Walkthrough --- Secrecy Enforcement} In a typical environment, a user can only convince themselves that a text editor is safe to use it they, or someone they trust, audits the program's source code. With IFC however, it is possible to reason that if the system can provide the following four guarantees, it cannot leak sensitive data without the user's permission.
+\paragraph{Walkthrough --- Secrecy Enforcement} In a typical environment, a user can only convince themselves that a text editor is safe to use it they, or someone they trust, audits the program's source code. With DIFC however, it is possible to reason that if the system can provide the following four guarantees, it cannot leak sensitive data without the user's permission.
 
 \begin{enumerate}
     \item If a process $a$ read a file with a secrecy tag $t$, then $t \in a_s$.
@@ -108,9 +108,6 @@
 \end{equation}
 
 \paragraph{} As an example, delegation is vital for a web server. To transmit another entity's information over an untrusted socket the server must have permission to \textit{declassify} it --- i.e. it must hold $f_{s}^{-}$, where $f$ is the secrecy label of the information to transmit.\footnote{The server process, $W$, must have $W_{i} = \varnothing$ as it holds a connection to an untrusted socket. Thus the integrity clause in ($\alpha$) will not interfere.}
-
-\paragraph{Conflict of Interest} The \textit{CamFlow} model additionally specifies a formalisation to avoid violating mutually exclusive tag-pairs being held simultaneously. This will be discussed in further detail in §~5.X,\footnote{TODO link} but is not essential to add to our understanding at this point.
-
 
 
 % ---------
@@ -286,3 +283,5 @@
     \item The \textit{HMAC-SHA1} hash of the \texttt{security} namespace is stored as \texttt{security.evm} for reference, and
     \item A digital signature of this value is stored alongside using a key that is sealed either using a \textit{TPM}\footnote{Trusted Platform Module.~\cite{tpm}} or passphrase.
 \end{enumerate}
+
+\textcolor{red}{Need to reference in the evaluation.}
