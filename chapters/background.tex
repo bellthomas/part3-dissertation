@@ -11,24 +11,22 @@
 
 \paragraph{} Formally, IFC defines and enforces a non-interference policy between abstract \textit{security contexts}. A simple example is the distinction between \textit{unclassified} and \textit{classified} data --- here, information is only allowed to flow \textit{up}, ensuring that an \textit{unclassified} entity does not learn anything marked as \textit{classified}.~\cite{Bell1973SecureCS} In general this relationship can be represented as a partial ordering over \textit{security contexts}, formulated as a lattice.~\cite{ifc-lattice}
 
-\paragraph{} However, practical systems often require dataflow adhering to a more complicated policy set --- for example, supporting \textit{declassification}.~\cite{10.5555/794199.795122} Work undertaken by Pasquier et al.,~\cite{camflow} which will be the core influence of the IFC model developed in this project, constructs a pliable and efficient \textit{decentralised information flow control} (\textit{DIFC}) model suitable for provenance enforcement and auditing in the Linux kernel.
-
-\paragraph{} The concepts presented are primarily derived from Pasquier~\cite{camflow} and Krohn et al.~\cite{flume}.
+\paragraph{} However, practical systems often require dataflow adhering to a more complicated policy set --- for example, supporting \textit{declassification}.~\cite{10.5555/794199.795122} Work undertaken by Pasquier et al.,~\cite{camflow} the core influence of the IFC model developed in this project, constructs a pliable and efficient \textit{decentralised information flow control} (\textit{DIFC}) model suitable for provenance enforcement and auditing in the Linux kernel.
 
 \subsection{Motivation, History, and \textit{Decentralised IFC}}
 
-\paragraph{} IFC has, in recent years, been increasing in support as a powerful methodology for ensuring granularly privacy whilst simultaneously not unduly restricting access to sensitive information. IFC annotates data records with opaque \textit{labels} that refer to either their confidentiality or integrity status. Rather than simply restricting access to sensitive data, as would be the action taken by an access control mechanism, IFC opts to track data as it propagates --- if an entity attempts to move this into an unknown, untrusted, or conflicting \textit{security context} the IFC system prevents this to ensure data is not improperly released.
+\paragraph{} IFC has, in recent years, been increasing in support as a powerful methodology for ensuring granular privacy whilst not unduly restricting access to sensitive information. IFC annotates data records with opaque \textit{labels} referring to their confidentiality or integrity status. Rather than simply restricting access to sensitive data, as an access control mechanism would, IFC tracks data as it propagates --- if an entity attempts to move data into an unknown, untrusted, or conflicting \textit{security context} the IFC system prohibits this to prevent improper release.
 
 \paragraph{} IFC originated from research conducted in the mid-1970s~\cite{ifc-lattice} but has not, as of yet, seen mainstream adoption. A major reason for this is that early schemes were designed around the \textit{multi-level security} (\textit{MLS}) doctrine set out in the \textit{Orange Book}:~\cite{orange-book} this locked IFC to a shallow set of broad labels, mirroring existing institutional segregation (such as \textit{restricted}, \textit{secret}, \textit{top secret}). Policies were managed centrally, something easily applicable in settings with rigorous hierarchies such as the military, but unwieldy in an organisation with manifold security protocols.
 
-\paragraph{} The majority of recent research in this area has advocated \textit{decentralised information flow control} 
-(\textit{DIFC}), introduced by Myers and Liskov.~\cite{difc,10.1145/363516.363526,10.1145/268998.266669} DIFC is more granular that schemes adhering to the \textit{MLS} model, for example, creating two distinct \textit{security contexts} for two files in the same folder. Policies are \textit{discretionary}, allowing users to specify and modify the enforced policies for assets they own.
+\paragraph{} The majority of recent research has advocated \textit{decentralised information flow control} 
+(\textit{DIFC}), introduced by Myers and Liskov.~\cite{difc,10.1145/363516.363526,10.1145/268998.266669} DIFC is more granular than schemes adhering to the \textit{MLS} model, for example, creating two distinct \textit{security contexts} for two files in the same folder. Policies are \textit{discretionary}, allowing users to specify and modify the enforced policies for assets they own.
 
 \subsection{Security Labels and the Reference Monitor}
 
-\paragraph{} A DIFC system relies on \textit{tags} and \textit{labels} to annotate the entities it tracks. Let $\mathcal{T}$ be a large set of opaque tokens, or \textit{tags}. An individual tag does not carry any particular meaning by itself, but is used as an abstract identifier for the integrity or secrecy of an entity's \textit{security context}. A \textit{label}, $l \subseteq \mathcal{T}$, is a collection of tags that are concretely attached to assets, such as files; these form a lattice under the subset-relation partial order. For each process $a$ there are two labels, one for secrecy, $a_s$, and one for integrity, $a_i$. For a tag $t$, $t \in a_s$ implies, conservatively, that process $a$ has seen information associated with tag $t$. Likewise, $t \in a_i$ indicates that every input to $a$ has been endorsed for an integrity level marked with $t$.
+\paragraph{} A DIFC system relies on \textit{tags} and \textit{labels} to annotate the entities it tracks. Let $\mathcal{T}$ be a large set of opaque tokens, or \textit{tags}. An individual tag alone does not carry any particular meaning, but is used as an abstract identifier for an entity's \textit{security context}. A \textit{label}, $l \subseteq \mathcal{T}$, is a collection of tags that are concretely attached to assets, such as files; these form a lattice under the subset-relation partial order. For each process $a$ there are two labels, one for secrecy, $a_s$, and one for integrity, $a_i$. For a tag $t$, $t \in a_s$ implies, conservatively, that process $a$ has seen information associated with tag $t$. Likewise, $t \in a_i$ indicates that every input to $a$ has been endorsed for an integrity level marked with $t$.
 
-\paragraph{Walkthrough --- Secrecy Enforcement} In a typical environment, a user can only convince themselves that a text editor is safe to use it they, or someone they trust, audits the program's source code. With DIFC however, it is possible to reason that if the system can provide the following four guarantees, it cannot leak sensitive data without the user's permission.
+\paragraph{Walkthrough --- Secrecy Enforcement} In a typical environment, a user can only convince themselves that a text editor is safe to use if they, or someone they trust, audits the program's source code. With DIFC however, it is possible to reason that if the system can provide the following four guarantees, it cannot leak sensitive data without the user's permission.
 
 \begin{enumerate}
     \item If a process $a$ read a file with a secrecy tag $t$, then $t \in a_s$.
@@ -37,7 +35,7 @@
     \item $t \in a_s$ restricts $a$'s access to an uncontrolled medium, such as a network.
 \end{enumerate}
 
-\paragraph{} The heart of an IFC implementation is its \textit{Reference Monitor}, which tracks the labelling for each process, granting or rejecting permission to execute an operation before being served to the operating system. Different solutions handle this process differently: \textit{Flume},~\cite{flume} for example, implements a full system interposition layer, forcing all \textit{syscalls} to pass through its userspace \textit{reference monitor} before reaching the OS, whereas \textit{CamFlow}~\cite{camflow} embeds its \textit{reference monitor} in the kernel itself. In all schemes, however, this trusted component is responsible for the policy and its enforcement on the system. This project focusses on this implementation.
+\paragraph{} The heart of an IFC implementation is its \textit{reference monitor}, which tracks the labelling for each process, granting or rejecting permission to execute an operation before it is executed by the OS. Contrasting solutions handle this process differently: \textit{Flume},~\cite{flume} for example, implements a full system interposition layer, forcing all \textit{syscalls} to pass through its userspace \textit{reference monitor} before reaching the OS, whereas \textit{CamFlow}~\cite{camflow} embeds its \textit{reference monitor} in the kernel itself. In all schemes, however, this trusted component is responsible for both policy and enforcement. This project focusses on this implementation.
 
 
 \subsection{Modelling}
@@ -66,29 +64,30 @@
 \end{table}
 
 
-\paragraph{} In centralised IFC schemes, the reference monitor is the only entity capable of creating, changing, and assigning tags. DIFC modifies this, giving \textit{all} processes the ability to create and modify tags for entities they hold ownership over; thus they alone have the right to declassify them.
+\paragraph{} In centralised IFC schemes, the \textit{reference monitor} is the only entity capable of creating, changing, and assigning tags. However DIFC gives \textit{all} processes the ability to create and modify tags for entities they own; thus they alone have the right to declassify them.
 
-\paragraph{Notation} As the model we build in §~\ref{sec:design} is closest in spirit to \textit{CamFlow}, we, for clarity in comparison, use the same notation (as summarised in Table~\ref{table:ifc-notation}).
+\paragraph{Notation} As the model we build in §~\ref{sec:design} is closest in spirit to \textit{CamFlow}, we use the same notation (as summarised in Table~\ref{table:ifc-notation}).
 
-\paragraph{Enforcing Safe Flows} ($\alpha$), below, describes the conditions in which a flow can be considered \textit{safe}, abiding by the system's IFC policy. Verbally, the recipient must be \textit{at least as privileged} as the originator and cannot accept information graded below its own integrity status. Here $\preceq$ denote any applicable preorder relation; this context uses inclusion ($\subseteq$). If a flow is \textit{impermissible} it is denoted as $A \nrightarrow B$.
+\paragraph{Enforcing Safe Flows} ($\alpha$), below, describes the conditions in which a flow can be considered \textit{safe}. The recipient must be \textit{at least as privileged} as the originator and cannot accept information graded below its own integrity status. Here $\preceq$ denotes any applicable preorder relation; this context uses inclusion ($\subseteq$). If a flow is \textit{impermissible} it is denoted as $A \nrightarrow B$.
 \begin{equation}
     A \rightarrow B \iff A_s \preceq B_s \;\; \land \;\; B_i \preceq A_i \tag{$\alpha$}
 \end{equation}
-\paragraph{} Information produced within a \textit{security context} may only flow within the same context or a related \textit{subcontext}. Integrity functions in the same way but in the inverse; data can only flow in contexts with the same, or lower, integrity grading.
+\paragraph{} Information produced within a \textit{security context} may only flow within the same context or a related \textit{subcontext}.
 
-\paragraph{Entity Creation} Correct initialisation of a new object's \textit{security context} is shown in ($\beta$). Logically it must be held at the same level as the environment creating it. An illustrative example is a process creating a new file; although permitted the result is subject to the same tainting as the original process.
+\paragraph{Entity Creation} Correct initialisation of a new object's \textit{security context} is shown in ($\beta$). Logically it must be held at the same level as the environment creating it. For example, when a process creates a new file, this must subject to the same tainting as the original process.
+
 \begin{equation}
     A \Rightarrow B \implies A_s = B_s \;\; \land \;\; A_i = B_i \tag{$\beta$}
 \end{equation}
 
-\paragraph{Vocational Label Management} The core mantra of the \textit{decentralised} aspect of \textit{DIFC} is that processes are themselves responsible for policies governing the assets they own. To this end, a process's labelling must be dynamic. Generally, entities can be sorted into two distinct categories;
+\paragraph{Vocational Label Management} The core mantra of the \textit{decentralised} aspect of \textit{DIFC} is that processes are responsible for policies governing their assets. Therefore, a process's labelling must be dynamic. Generally, entities are sorted into two distinct categories;
 
 \begin{itemize}
     \item \textit{Active} (processes), with \textit{mutable} security contexts.
     \item \textit{Passive} (files, pipes, sockets, etc.), which merely act as data vessels for \textit{active} entities.
 \end{itemize}
 
-\paragraph{} \textit{Active} entities have the right to modify their labelling iff they have the capability to make that modification. These capabilities come in two forms; one for addition and one for removal of tags. The set $A_{s}^{+} \subseteq \mathcal{T}$ enumerates all the tags that entity $A$ has the ability to add to its security labelling. Likewise, $A_{s}^{-} \subseteq \mathcal{T}$ holds all of the tags $A$ has the ability to remove from its labelling. These sets are modified either in the process of creating an entity or in receipt of a delegated capability from a peer. The sets $A_{i}^{\pm} \subseteq \mathcal{T}$ also exist, performing the same function for integrity labels. ($\gamma$) describes this process formally.
+\paragraph{} \textit{Active} entities may modify their labelling iff they have the capability to add or remove specific tags. The set $A_{s}^{+} \subseteq \mathcal{T}$ lists all the tags that entity $A$ has the ability to add to its security labelling, while $A_{s}^{-} \subseteq \mathcal{T}$ holds all the tags $A$ has the ability to remove from its labelling. These sets are modified either during creation or in receipt of a delegated capability from a peer. The sets $A_{i}^{\pm} \subseteq \mathcal{T}$ also exist, performing the same function for integrity labels. ($\gamma$) describes this process formally.
 \begin{equation}
     \left\{\begin{array}{lr}
         A'_x \leftarrow A_x \cup \{t\} & \text{if} \;\; t \in A_{x}^{+} \\
@@ -96,13 +95,11 @@
     \end{array}\right\} \implies A \rightsquigarrow A' \tag{$\gamma$}
 \end{equation}
 
-\paragraph{} A notable restriction is that a process has to be aware of the IFC constraints imposed on it and how to interact with the system to perform this operation. Most processes should not require this, but is an important consideration when applying DIFC to an entire system.
+\paragraph{} A notable restriction is that processes need to be aware of the IFC constraints imposed on them and how to interact with the system to manage their labels.
 
-\paragraph{Capability Lifecycle and Delegation} As defined by ($\beta$), an entity automatically inherits the labelling of its creator: this process, however, does not pass on any capabilities ($A_{s}^{\pm}, A_{i}^{\pm} = \varnothing$). This raises the need for \textit{capability delegation}.
+\paragraph{Capability Lifecycle and Delegation} As defined by ($\beta$), an entity automatically inherits the labelling of its creator: however without any capabilities ($A_{s}^{\pm}, A_{i}^{\pm} = \varnothing$). This raises the need for \textit{capability delegation} ($\delta$). A capability held by $A$, $t_{x}^{\pm}$, where $t \in A_{x}^{\pm}$, is permitted to be transferred to $B$ to act on its behalf.
 
-\paragraph{} A capability held by $A$, $t_{x}^{\pm}$, where $t \in A_{x}^{\pm}$, is permitted to be transferred to $B$ in order for it to act on its behalf. Delegation is denoted as follows in ($\delta$).
-
-
+\vspace{-5mm}
 \begin{equation}
     A \xhookrightarrow[]{t^{\pm}_{x}} B \;\; \text{only if} \;\; t \in A_{x}^{\pm} \tag{$\delta$}
 \end{equation}
