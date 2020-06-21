@@ -99,12 +99,12 @@
 
 \paragraph{Capability Lifecycle and Delegation} As defined by ($\beta$), an entity automatically inherits the labelling of its creator: however without any capabilities ($A_{s}^{\pm}, A_{i}^{\pm} = \varnothing$). This raises the need for \textit{capability delegation} ($\delta$). A capability held by $A$, $t_{x}^{\pm}$, where $t \in A_{x}^{\pm}$, is permitted to be transferred to $B$ to act on its behalf.
 
-\vspace{-5mm}
+\vspace{-3mm}
 \begin{equation}
     A \xhookrightarrow[]{t^{\pm}_{x}} B \;\; \text{only if} \;\; t \in A_{x}^{\pm} \tag{$\delta$}
 \end{equation}
 
-\paragraph{} As an example, delegation is vital for a web server. To transmit another entity's information over an untrusted socket the server must have permission to \textit{declassify} it --- i.e. it must hold $f_{s}^{-}$, where $f$ is the secrecy label of the information to transmit.\footnote{The server process, $W$, must have $W_{i} = \varnothing$ as it holds a connection to an untrusted socket. Thus the integrity clause in ($\alpha$) will not interfere.}
+\paragraph{} Delegation is vital for webservers, for example. To transmit another entity's information over an untrusted socket the server must have permission to \textit{declassify} it --- i.e. it must hold $f_{s}^{-}$, where $f$ is the secrecy label of the information to transmit.\footnote{The server process, $W$, must have $W_{i} = \varnothing$ as it holds a connection to an untrusted socket. Thus the integrity clause in ($\alpha$) will not interfere.}
 
 
 % ---------
