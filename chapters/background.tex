@@ -1,5 +1,5 @@
 
-\paragraph{} This chapter will cover a number of topics essential to understanding the rationale and implementation of the design as discussed in §~\ref{sec:design}. These include; an introduction to \textit{Information Flow Control} (\textit{IFC}), the Intel SGX platform, and an overview of key aspects of the Linux kernel relevant to the architecture of the prototype.
+\paragraph{} This chapter will cover the topics essential to understanding the rationale and implementation of the design as discussed in §~\ref{sec:design}. These include; an introduction to \textit{Information Flow Control} (\textit{IFC}), the Intel SGX platform, and an overview of key aspects of the Linux kernel relevant to the architecture of the prototype.
 
 
 % -------------
@@ -9,7 +9,7 @@
 
 \paragraph{} IFC regulates how and where data is permitted to move and be transformed in a computer system.~\cite{ifc-data-prop} This differs from access control, which defines \textit{what} resources may be used by an entity --- IFC allows granular control over \textit{how} they may be used once accessed, including restricting propagation between components. 
 
-\paragraph{} Formally, IFC defines and enforces a non-interference policy between abstract \textit{security contexts}. A simple, atomic example is the distinction between \textit{unclassified} and \textit{classified} data --- here, information is only allowed to flow \textit{up}, ensuring that an \textit{unclassified} entity does not learn anything marked as \textit{classified}.~\cite{Bell1973SecureCS} In general this form of relationship can be represented as a partial ordering over \textit{security contexts}, formulated as a lattice.~\cite{ifc-lattice}
+\paragraph{} Formally, IFC defines and enforces a non-interference policy between abstract \textit{security contexts}. A simple example is the distinction between \textit{unclassified} and \textit{classified} data --- here, information is only allowed to flow \textit{up}, ensuring that an \textit{unclassified} entity does not learn anything marked as \textit{classified}.~\cite{Bell1973SecureCS} In general this relationship can be represented as a partial ordering over \textit{security contexts}, formulated as a lattice.~\cite{ifc-lattice}
 
 \paragraph{} However, practical systems often require dataflow adhering to a more complicated policy set --- for example, supporting \textit{declassification}.~\cite{10.5555/794199.795122} Work undertaken by Pasquier et al.,~\cite{camflow} which will be the core influence of the IFC model developed in this project, constructs a pliable and efficient \textit{decentralised information flow control} (\textit{DIFC}) model suitable for provenance enforcement and auditing in the Linux kernel.
 
