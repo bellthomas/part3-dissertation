@@ -271,7 +271,7 @@ citadel_response_t asm_handle_request (pid_t pid,
 
 \subsubsection{Host Application}
 
-\paragraph{} Before requests are presented to the resident policy module (§~\ref{sec:interdomain-comms}), various steps need to be taken in preparation. Requests often refer to absolute filepaths, creating a need to retrieve their tags, if they exist --- these requests are served by the security \textit{xattrs} attached to the VFS file. Translation is performed pre-emptively depending on the operation requested, and to minimise any lookup overhead, results are cached in a \textit{translation cache}. This is implemented using \textit{sparsehash},\footnote{\url{https://github.com/sparsehash/sparsehash}} and great care is taken to detect stale entities that may confuse the internal decision process.
+\paragraph{} Various steps need to be taken before requests are presented to the resident policy module (§~\ref{sec:interdomain-comms}). Requests often refer to absolute filepaths, creating a need to retrieve their tags, if they exist --- these requests are served by the security \textit{xattrs} attached to the VFS file. Translation is performed pre-emptively depending on the operation requested, and to minimise any lookup overhead, results are cached in a \textit{translation cache}. This is implemented using \textit{sparsehash},\footnote{\url{https://github.com/sparsehash/sparsehash}} and great care is taken to detect stale entities that may confuse the internal decision process.
 
 
 \subsubsection{Enforcement Interface}

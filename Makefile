@@ -1,19 +1,21 @@
-LATEX=latex
+LATEX=pdflatex --interaction=batchmode --shell-escape
 BIBTEX=bibtex
 DVIPS=dvips
 PS2PDF=ps2pdf
 
 all: dissertation.pdf
-dissertation.pdf: dissertation.ps
-	$(PS2PDF) -dEmbedAllFonts=true dissertation.ps test.pdf
-	ps2pdf13 -dPDFSETTINGS=/prepress test.pdf dissertation.pdf
-	rm -f test.pdf
 
-dissertation.ps: dissertation.dvi
-	$(DVIPS) -Pdownload35 -ta4 dissertation.dvi
+# dissertation.pdf: dissertation.ps
+# 	$(PS2PDF) -dEmbedAllFonts=true dissertation.ps test.pdf
+# 	ps2pdf13 -dPDFSETTINGS=/prepress test.pdf dissertation.pdf
+# 	rm -f test.pdf
+
+# dissertation.ps: dissertation.dvi
+# 	$(DVIPS) -Pdownload35 -ta4 dissertation.dvi
 
 #dissertation.dvi: dissertation.tex dissertation.bib
-dissertation.dvi: dissertation.tex titlepage.tex declaration.tex abstract.tex
+
+dissertation.pdf: dissertation.tex titlepage.tex declaration.tex abstract.tex
 	$(LATEX) dissertation
 #       $(BIBTEX) dissertation
 	$(LATEX) dissertation
@@ -28,3 +30,6 @@ count:
 
 count-all:
 	@texcount -utf8 -sum -inc dissertation.tex
+
+upload:
+	scp dissertation.pdf ahb36@ely.cl.cam.ac.uk:~/public_html
