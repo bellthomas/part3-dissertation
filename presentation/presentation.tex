@@ -42,11 +42,42 @@
 \end{frame}
 
 \begin{frame}{Information Flow Control}
-    
-\begin{itemize}
-    \item Different
-\end{itemize}
-    
+    \begin{itemize}
+        \item Access Control specifics \textit{who} can access resources. IFC also mediates \textit{how} they can be used once opened.
+        \vspace{5mm}
+        \item Construct an abstract system of \textit{entities}; \\
+        $\;\;\rightsquigarrow$ processes, files, sockets, etc.
+        \vspace{5mm}
+        \item Each \textit{entity} carries a \textit{security context}, defining its granular ownership or restriction information.
+        \vspace{5mm}
+        \item Aim: achieve \textit{non-interference} between all \textit{security contexts}.
+    \end{itemize}  
+\end{frame}
+
+\begin{frame}{Information Flow Control}  
+    \textit{Very briefly;}
+    \vspace{3mm}
+    \begin{itemize}
+        \item \textbf{Tagging} \\
+        Entities must be uniquely and reliably identifiable to support decisions.
+        \vspace{5mm}
+        \item \textbf{Tracking} \\
+        Contexts are mutable to accommodate an evolving situation.
+        \vspace{5mm}
+        \item \textbf{Policy Decisions} \\
+        Is an operation acceptable given its consequences? \\
+        e.g. $A \rightarrow B \iff A_s \preceq B_s \;\land\; A_i \succeq B_i$
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{\textit{Decentralised} Information Flow Control}
+    \begin{itemize}
+        \item Centrally administered systems are highly restrictive.
+        \vspace{5mm}
+        \item Idea: let entities specify their own protection policy for assets they own. Enforcement becomes \textit{discretionary}, allowing more flexibility and support for operations such as \textit{declassification}.
+    \end{itemize}
+    \vspace{5mm}
+    Enforcement is implemented using a \textit{reference monitor}.
 \end{frame}
 
 \begin{frame}{Intel SGX}
