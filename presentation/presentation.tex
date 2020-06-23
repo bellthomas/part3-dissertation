@@ -66,7 +66,8 @@
         \vspace{5mm}
         \item \textbf{Policy Decisions} \\
         Is an operation acceptable given its consequences? \\
-        e.g. $A \rightarrow B \iff A_s \preceq B_s \;\land\; A_i \succeq B_i$
+        e.g. $A \rightarrow B \iff A_s \preceq B_s \;\land\; A_i \succeq B_i$ \\
+        c.f. Biba, Bell-LaPadula
     \end{itemize}
 \end{frame}
 
@@ -80,24 +81,153 @@
     Enforcement is implemented using a \textit{reference monitor}.
 \end{frame}
 
+\begin{frame}{Linux Security Modules}
+
+    \begin{figure}[]
+        \centering
+        \includegraphics[width=0.6\linewidth]{../figures/LSM.pdf}
+        \vspace{5mm}
+        \caption{High level overview of the \textsc{Citadel} architecture.}
+        \label{fig:citadel-overview}
+    \end{figure}
+
+\end{frame}
+
 \begin{frame}{Intel SGX}
-    
+    A general-purpose \textit{trusted execution environment} provided via x86 at the architectural level in modern processors.
+    \vspace{5mm}
+    \begin{figure}[]
+        \centering
+        \includegraphics[width=0.99\linewidth]{../figures/SGX-architecture.pdf}
+        \vspace{5mm}
+        \caption{High level overview of the \textsc{Citadel} architecture.}
+        \label{fig:citadel-overview}
+    \end{figure}
 \end{frame}
 
 
-\begin{frame}{Motivation}
-    
+\begin{frame}{Intel SGX}
+    \begin{figure}[]
+        \centering
+        \includegraphics[width=0.99\linewidth]{../figures/SGX-AdvArchitecture.pdf}
+        \vspace{5mm}
+        \caption{High level overview of the \textsc{Citadel} architecture.}
+        \label{fig:citadel-overview}
+    \end{figure}
 \end{frame}
 
 \begin{frame}{\textsc{Citadel}}
+    A prototype implementation of an SGX-protected reference monitor for Linux. \\ \\
+    Reference monitors must be;
+    \begin{itemize}
+        \item Always invoked.
+        \item Evaluable.
+        \item Tamper proof.
+    \end{itemize}
+    \vspace{5mm}
+    \textit{---  in theory, a perfect use case for SGX}.
+\end{frame}
+
+\begin{frame}{Architecture}
+
+    \begin{figure}
+        \centering
+        \begin{subfigure}{.5\textwidth}
+          \centering
+          \includegraphics[width=.9\linewidth]{../figures/SGX-EnclaveIntegration.pdf}
+          \vspace{5mm}
+          \caption{A subfigure}
+          \label{fig:sub1}
+        \end{subfigure}%
+        \begin{subfigure}{.5\textwidth}
+          \centering
+          \includegraphics[width=.85\linewidth]{../figures/IFCFlow-1.pdf}
+          \vspace{5mm}
+          \caption{A subfigure}
+          \label{fig:sub2}
+        \end{subfigure}
+        % \caption{A figure with two subfigures}
+        \label{fig:test}
+    \end{figure}
+
     
+\end{frame}
+
+\begin{frame}{Architecture}
+
+    \begin{figure}
+        \centering
+        \begin{subfigure}{.5\textwidth}
+          \centering
+          \includegraphics[width=.9\linewidth]{../figures/SGX-EnclaveIntegration-SoloActual.pdf}
+          \vspace{5mm}
+          \caption{A subfigure}
+          \label{fig:sub1}
+        \end{subfigure}%
+        \begin{subfigure}{.5\textwidth}
+          \centering
+          \includegraphics[width=\linewidth]{../figures/IFCFlow-2.pdf}
+          \vspace{5mm}
+          \caption{A subfigure}
+          \label{fig:sub2}
+        \end{subfigure}
+        % \caption{A figure with two subfigures}
+        \label{fig:test}
+    \end{figure}
+
+    
+\end{frame}
+
+\begin{frame}{Architecture}
+\begin{figure}[]
+    \centering
+    \includegraphics[width=\linewidth]{../figures/OverallArchitecture.pdf}
+    % \vspace{5mm}
+    % \caption{High level overview of the \textsc{Citadel} architecture.}
+    \label{fig:citadel-overview}
+\end{figure}
+\end{frame}
+
+
+
+\begin{frame}{Results}
+    \begin{figure}[]
+        \centering
+        \includegraphics[width=0.9\linewidth]{../figures/graphs/io.pdf}
+        \vspace{3mm}
+        \caption{High level overview of the \textsc{Citadel} architecture.}
+        \label{fig:citadel-overview}
+    \end{figure}
 \end{frame}
 
 \begin{frame}{Results}
-    
+    \begin{itemize}
+        \item Median \textit{syscall} overhead of $43\mu s\;\;$ ($1-2 \mu s$ amoritsed). \\ 
+        \vspace{5mm}
+        \item $20-25\%$ effective throughput decrease for IPC. \\ 
+        \vspace{5mm}
+        \item Real-world benchmarks using \textsc{Nginx};
+        \begin{itemize}
+            \item Low latency trials: 24\% median overhead.
+            \item High bandwidth file transfers: $\sim 0\%$ median overhead.
+        \end{itemize}
+
+        
+        \vspace{5mm}
+        \item Security characteristics --- \textit{promising}.
+    \end{itemize}
 \end{frame}
 
-\begin{frame}{Related Works}
+\begin{frame}{Conclusion}
+    \begin{itemize}
+        \item \textsc{Citadel} ---  a modular, enclave-backed reference monitor to securely and verifiably implement IFC methods in the Linux kernel.
+        \item Implemented using enclaves, an LSM, and an auxiliary library for unobstrusive application integration.
+        \item Real-world performance overhead of $20-25\%$ observed using \textsc{Nginx} and microbenchmarks.
+        \item Demonstrated the viability of a symbiotic enclave-kernel relationship.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{References}
     
 \end{frame}
 
