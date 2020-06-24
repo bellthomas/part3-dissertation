@@ -51,11 +51,13 @@
         \item Each \textit{entity} carries a \textit{security context}, defining its granular ownership or restriction information.
         \vspace{5mm}
         \item Aim: achieve \textit{non-interference} between all \textit{security contexts}.
+        \vspace{5mm}
+        \item Decentralised IFC --- let entities specify their own, \textit{discretionary}, protection policy for assets they own. More flexible, and supports operations such as \textit{declassification}.
     \end{itemize}  
 \end{frame}
 
 \begin{frame}{Information Flow Control}  
-    \textit{Very briefly;}
+    Enforcement is implemented using a \textit{reference monitor}, which provides;
     \vspace{3mm}
     \begin{itemize}
         \item \textbf{Tagging} \\
@@ -66,20 +68,11 @@
         \vspace{5mm}
         \item \textbf{Policy Decisions} \\
         Is an operation acceptable given its consequences? \\
-        e.g. $A \rightarrow B \iff A_s \preceq B_s \;\land\; A_i \succeq B_i$ \\
+        % e.g. $A \rightarrow B \iff A_s \preceq B_s \;\land\; A_i \succeq B_i$ \\
         c.f. Biba, Bell-LaPadula
     \end{itemize}
 \end{frame}
 
-\begin{frame}{\textit{Decentralised} Information Flow Control}
-    \begin{itemize}
-        \item Centrally administered systems are highly restrictive.
-        \vspace{5mm}
-        \item Idea: let entities specify their own protection policy for assets they own. Enforcement becomes \textit{discretionary}, allowing more flexibility and support for operations such as \textit{declassification}.
-    \end{itemize}
-    \vspace{5mm}
-    Enforcement is implemented using a \textit{reference monitor}.
-\end{frame}
 
 \begin{frame}{Linux Security Modules}
 
@@ -87,7 +80,7 @@
         \centering
         \includegraphics[width=0.6\linewidth]{../figures/LSM.pdf}
         \vspace{5mm}
-        \caption{High level overview of the \textsc{Citadel} architecture.}
+        \caption{Core workflow of an LSM.}
         \label{fig:citadel-overview}
     \end{figure}
 
@@ -100,7 +93,7 @@
         \centering
         \includegraphics[width=0.99\linewidth]{../figures/SGX-architecture.pdf}
         \vspace{5mm}
-        \caption{High level overview of the \textsc{Citadel} architecture.}
+        \caption{Abstract overview of SGX's protections.}
         \label{fig:citadel-overview}
     \end{figure}
 \end{frame}
@@ -111,7 +104,7 @@
         \centering
         \includegraphics[width=0.99\linewidth]{../figures/SGX-AdvArchitecture.pdf}
         \vspace{5mm}
-        \caption{High level overview of the \textsc{Citadel} architecture.}
+        \caption{Components of the SGX platform.}
         \label{fig:citadel-overview}
     \end{figure}
 \end{frame}
@@ -128,7 +121,7 @@
     \textit{---  in theory, a perfect use case for SGX}.
 \end{frame}
 
-\begin{frame}{Architecture}
+\begin{frame}{Architecture?}
 
     \begin{figure}
         \centering
@@ -136,14 +129,14 @@
           \centering
           \includegraphics[width=.9\linewidth]{../figures/SGX-EnclaveIntegration.pdf}
           \vspace{5mm}
-          \caption{A subfigure}
+          \caption{Naive enclave integration.}
           \label{fig:sub1}
         \end{subfigure}%
         \begin{subfigure}{.5\textwidth}
           \centering
           \includegraphics[width=.85\linewidth]{../figures/IFCFlow-1.pdf}
           \vspace{5mm}
-          \caption{A subfigure}
+          \caption{Traditional reference monitor decision flow.}
           \label{fig:sub2}
         \end{subfigure}
         % \caption{A figure with two subfigures}
@@ -161,14 +154,14 @@
           \centering
           \includegraphics[width=.9\linewidth]{../figures/SGX-EnclaveIntegration-SoloActual.pdf}
           \vspace{5mm}
-          \caption{A subfigure}
+          \caption{High level \textsc{Citadel} dataflow. Backflow from the LSM to the enclave is asynchoronus.}
           \label{fig:sub1}
         \end{subfigure}%
         \begin{subfigure}{.5\textwidth}
           \centering
           \includegraphics[width=\linewidth]{../figures/IFCFlow-2.pdf}
           \vspace{5mm}
-          \caption{A subfigure}
+          \caption{\textsc{Citadel} IFC decision flow. Decision provides a \textit{promise} of access; permission propagates asynchronously to the LSM.}
           \label{fig:sub2}
         \end{subfigure}
         % \caption{A figure with two subfigures}
@@ -193,9 +186,9 @@
 \begin{frame}{Results}
     \begin{figure}[]
         \centering
-        \includegraphics[width=0.9\linewidth]{../figures/graphs/io.pdf}
-        \vspace{3mm}
-        \caption{High level overview of the \textsc{Citadel} architecture.}
+        \includegraphics[width=0.9\linewidth]{../figures/graphs/perf-pres.pdf}
+        \vspace{1mm}
+        \caption{Effective operation bandwidths between two processes.}
         \label{fig:citadel-overview}
     \end{figure}
 \end{frame}
@@ -223,7 +216,7 @@
         \item \textsc{Citadel} ---  a modular, enclave-backed reference monitor to securely and verifiably implement IFC methods in the Linux kernel.
         \item Implemented using enclaves, an LSM, and an auxiliary library for unobstrusive application integration.
         \item Real-world performance overhead of $20-25\%$ observed using \textsc{Nginx} and microbenchmarks.
-        \item Demonstrated the viability of a symbiotic enclave-kernel relationship.
+        \item Demonstrates potential viability of a symbiotic enclave-kernel relationship for security implementations.
     \end{itemize}
 \end{frame}
 
