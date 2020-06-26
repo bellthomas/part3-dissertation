@@ -36,9 +36,7 @@
 
 \paragraph{} The disruption this change causes could severely impact performance; Figure~\ref{fig:sgx-abstract-integration} highlights the significant change to overall control flow. Most notably, externalising part of the LSM to an enclave forces, in the worst case, an additional pair of context switches for each \textit{syscall}.
 
-\paragraph{} Given a ring-3 component is unavoidable, we seek to minimise the overhead caused by its integration, while maintaining \textit{safety} (every operation must be mediated). This problem is reminiscent of the ones that inspired the development of \textit{exokernels}~\cite{10.1145/224056.224076} --- both the drawbacks and opportunities of those approaches apply here.~\cite{10.1145/269005.266644} 
-% TODO
-% \textcolor{red}{More detail about why.}
+\paragraph{} Given a ring-3 component is unavoidable, we seek to minimise the overhead caused by its integration, while maintaining \textit{safety} (every operation must be mediated). This situation is reminiscent of \textit{exokernels};~\cite{10.1145/224056.224076} forcing a portion of the system into userspace could, if treated carefully, help overall performance.~\cite{10.1145/269005.266644} 
 
 \paragraph{} Two architectures, as illustrated in Figure~\ref{fig:sgx-integration}, were initially considered. 
 
