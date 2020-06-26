@@ -283,6 +283,7 @@
 
 
 \subsubsection{Integrity Measurement Architecture}
+\label{sec:ima}
 
 \paragraph{} Linux's IMA subsystem is responsible for calculating the hashes of files and programs as they are loaded (\textit{measurement}), verifying them against an allowed list if required (\textit{appraisal}). Its driving purpose is to detect if files have been maliciously altered remotely or locally; the file's hash is stored as an \textit{xattr} (\texttt{security.ima}). IMA supports many use cases, the majority of which are complementary to the LSM framework, but we shall focus on one here --- EVM.
 
@@ -292,5 +293,3 @@
     \item The \textit{HMAC-SHA1} hash of the \texttt{security} namespace is stored as \texttt{security.evm} for reference, and
     \item A digital signature of this value is stored alongside using a key that is sealed either using a \textit{TPM}\footnote{Trusted Platform Module.~\cite{tpm}} or passphrase.
 \end{enumerate}
-
-\textcolor{red}{Need to reference in the evaluation.}
