@@ -39,47 +39,47 @@
     
     \renewcommand\theadfont{\normalsize}
     \renewcommand\arraystretch{1.3}
-    \begin{tabular}{l@{\hskip 0.15in} r@{\hskip 0.6in} r@{\hskip 0.35in} r} 
+    \begin{tabular}{l@{\hskip 0.15in} r@{\hskip 0.6in} r@{\hskip 0.35in} r@{\hskip 0.35in} r} 
         
         \toprule
-        & \thead{\multirow{2}{*}{\textsc{Native}}} & \multicolumn{2}{c}{\thead{\textsc{Citadel}}} \\
-        \cline{3-4}
-        &  & \thead{\textit{Amortised}} & \thead{\textit{Cache Miss}} \\
+        & \thead{\multirow{2}{*}{\textsc{Native}}} & \multicolumn{3}{c}{\thead{\textsc{Citadel}}} \\
+        \cline{3-5}
+        &  & \thead{\textit{Amortised}} & \thead{\textit{Cache Miss}} & \thead{\textit{$99^{th}$ \%ile}} \\
         % \cline{1-4}
         \midrule 
-        \texttt{open()} & $1.675\pm0.076$ & $6.083\pm0.129$ & $50.133\pm1.482$ \\
-        \texttt{read()} & $5.724\pm0.206$ & $7.010\pm0.192$ & $54.736\pm1.556$ \\
-        \texttt{write()} & $14.340\pm0.208$ & $15.597\pm0.250$ & $63.824\pm1.902$ \\
-        \texttt{close()} & $0.651\pm0.005$ & \multicolumn{2}{c}{$0.718\pm0.011$} \\
+        \texttt{open()} & $1.675\pm0.076$ & $6.083\pm0.129$ & $50.133\pm1.482$ & $2.38\times$\\
+        \texttt{read()} & $5.724\pm0.206$ & $7.010\pm0.192$ & $54.736\pm1.556$ & $1.26\times$\\
+        \texttt{write()} & $14.340\pm0.208$ & $15.597\pm0.250$ & $63.824\pm1.902$ & $1.05\times$\\
+        \texttt{close()} & $0.651\pm0.005$ & \multicolumn{2}{c}{$0.718\pm0.011$} & $1.10\times$\\
 
         
 
         \midrule 
-        \texttt{socket()} & $1.446\pm0.179$ & \multicolumn{2}{c}{$3.156\pm0.291$} \\
-        \texttt{bind()} & $0.762\pm0.023$ & $1.911\pm0.183$ & $49.110\pm1.746$ \\
-        \texttt{listen()} & $0.705\pm0.015$ & $1.882\pm0.149$ & $48.411\pm1.386$ \\
-        \texttt{connect()} & $16.570\pm0.278$ & $17.961\pm0.330$ & $66.273\pm2.147$ \\
+        \texttt{socket()} & $1.446\pm0.179$ & \multicolumn{2}{c}{$3.156\pm0.291$} & $1.02\times$\\
+        \texttt{bind()} & $0.762\pm0.023$ & $1.911\pm0.183$ & $49.110\pm1.746$ & $2.78\times$\\
+        \texttt{listen()} & $0.705\pm0.015$ & $1.882\pm0.149$ & $48.411\pm1.386$ & $2.91\times$\\
+        \texttt{connect()} & $16.570\pm0.278$ & $17.961\pm0.330$ & $66.273\pm2.147$ &$1.05\times$\\
 
         \midrule 
-        \texttt{shmget()} & $1.880\pm0.122$ & $1.913\pm0.111$ & $49.326\pm1.466$ \\
-        \texttt{shmat()} & $0.420\pm0.005$ & $1.575\pm0.134$ & $47.997\pm1.560$ \\
-        \texttt{shmctl()} & $0.418\pm0.005$ & $0.743\pm0.083$ & $45.912\pm1.114$ \\
-        \texttt{shmdt()} & $0.415\pm0.003$ & \multicolumn{2}{c}{$1.342\pm0.040$} \\
+        \texttt{shmget()} & $1.880\pm0.122$ & $1.913\pm0.111$ & $49.326\pm1.466$ & $0.98\times$\\
+        \texttt{shmat()} & $0.420\pm0.005$ & $1.575\pm0.134$ & $47.997\pm1.560$ & $0.99\times$\\
+        \texttt{shmctl()} & $0.418\pm0.005$ & $0.743\pm0.083$ & $45.912\pm1.114$ & $0.97\times$\\
+        \texttt{shmdt()} & $0.415\pm0.003$ & \multicolumn{2}{c}{$1.342\pm0.040$} & $1.01\times$\\
 
 
 
         \midrule 
-        \texttt{pipe()} & $1.110\pm0.061$ & $1.288\pm0.069$ & $47.334\pm1.147$ \\
-        \texttt{mkfifo()} & $3.865\pm0.048$ & $11.509\pm0.405$ & $59.623\pm1.788$ \\
+        \texttt{pipe()} & $1.110\pm0.061$ & $1.288\pm0.069$ & $47.334\pm1.147$ & $1.02\times$\\
+        \texttt{mkfifo()} & $3.865\pm0.048$ & $11.509\pm0.405$ & $59.623\pm1.788$ & $1.93\times$\\
 
         \midrule 
-        \texttt{fork()} & $47.866\pm3.175$ & $48.647\pm3.457$ & $81.174\pm3.829$ \\
-        \texttt{citadel\_init()} & $-$ & $0.801\pm0.009$ & $34.940\pm1.329$ \\
+        \texttt{fork()} & $47.866\pm3.175$ & $48.647\pm3.457$ & $81.174\pm3.829$ & $15.77\times$\\
+        \texttt{citadel\_init()} & $-$ & $0.801\pm0.009$ & $34.940\pm1.329$ & ---\\
         \bottomrule
     \end{tabular}
     \vspace{5mm}
     \captionsetup{justification=centering}
-    \caption[\texttt{libcitadel} microbenchmarks]{\texttt{libcitadel} microbenchmarks. \\ All values are in $\mu s$ and the sample standard deviation is shown alongside the mean. For \textsc{Citadel}, both the amortised and average cache-miss durations are given. Only one value is given if the operation is not affected by a cache miss. $n=10^6$.}
+    \caption[\texttt{libcitadel} microbenchmarks]{\texttt{libcitadel} microbenchmarks. \\ All values are in $\mu s$ and the sample standard deviation is shown alongside the mean. For \textsc{Citadel}, both the amortised and average cache-miss durations are given. Only one value is given if the operation is not affected by a cache miss. The overhead between \textsc{Citadel} and Native Linux at the $99^{th}$ percentile is also presented. $n=10^6$.}
     \label{table:syscall-microbenchmarks}
 \end{table}
 
@@ -96,7 +96,7 @@
 
 \paragraph{} Overall \texttt{libcitadel} contributes $\sim{}1 \mu s$ of overhead (amortised) on average --- this rises to $\sim$~$40 \mu s$ on a cache miss. Figure~\ref{fig:open-anatomy} presents a more detailed view of where exactly this overhead arises, approximately plotting where the control flow for \texttt{c\_open()} moves (on a cache miss). Interestingly, the slowest component is the communication channel between \texttt{libcitadel} and \texttt{citadeld} (median $26\mu s$);\footnote{Included in the \textit{Application} regions.} as a result, the core reference monitor functionality only adds a median penalty of $24\mu s$. The final \textit{Kernel} call before terminating is the internal call to \texttt{open()}. Additionally, the $10^{th}$ percentile demonstrates that the first \textit{Kernel} call is not always required if the entity's metadata is resident in the \texttt{citadeld} cache.
 
-\paragraph{} Figure~\ref{fig:io-graph} plots observed effective bandwidth whilst reading from and writing to a 16 MiB file with different sized buffers; the corresponding percentage overhead inflicted by \textsc{Citadel} is plotted to the right. The benchmark driving this was adapted for Linux from one written by R.~Watson for FreeBSD.~\cite{l41-benchmark} The results clearly show \textsc{Citadel} having a more adverse effect on performance for smaller buffer sizes; unsuprising, as smaller buffers force a larger number of calls to \texttt{read()} / \texttt{write()}. It is unclear why \textsc{Citadel} provides better performance for large buffers with \texttt{write()}, an unexpected artefact --- the difference is statistically significant for buffers in the range $256$KiB and $2$ MiB, and reproducible. More work is required to determine the root causes, but hypotheses include the slight optimisation afforded by regular, small delays easing pressure on microarchitectural caches.
+\paragraph{} Figure~\ref{fig:io-graph} plots observed effective bandwidth whilst reading from and writing to a 16 MiB file with different sized buffers; the corresponding percentage overhead inflicted by \textsc{Citadel} is plotted to the right. The benchmark driving this was adapted for Linux from one written by R.~Watson for FreeBSD.~\cite{l41-benchmark} The results clearly show \textsc{Citadel} having a more adverse effect on performance for smaller buffer sizes; unsurprising, as smaller buffers force a larger number of calls to \texttt{read()} / \texttt{write()}. It is unclear why \textsc{Citadel} provides better performance for large buffers with \texttt{write()}, an unexpected artefact --- the difference is statistically significant for buffers in the range $256$KiB and $2$ MiB, and reproducible. More work is required to determine the root causes, but hypotheses include the slight optimisation afforded by regular, small delays easing pressure on microarchitectural caches.
 
 
 
@@ -107,7 +107,7 @@
 
 \paragraph{} Overall, the results between the two contexts are similar --- both see approximately 20\% degradation in the worst cases, tending towards equal performance when using $\sim 10^5$-byte blocks. At first glance it appears that \textsc{Citadel} affects the performance between 2 threads slightly more than 2 processes, but in fact \textsc{Citadel} performs near-identically in both. Native performance is more heavily optimised when sending between two threads; \textsc{Citadel} overshadows any latency gained by the kernel.
 
-\paragraph{} In a similar way to \texttt{write()}, \textsc{Citadel} unexpectedly outperforms the native kernel in both contexts using \texttt{pipe()}. The readings are noisy, but statistically significant for buffers in the range 16 KiB to 8 MiB, and reproducable. The cause is again unknown, but observing that the native kernel's throughput halves after buffers of 8 KiB, we suspect that this is the result of cache exhaustion or inopportune paging. Notably, \textsc{Citadel}'s readings exhibit a far larger IQR for large buffer sizes than the native kernel, a side effect that is repeated in real-world testing.
+\paragraph{} In a similar way to \texttt{write()}, \textsc{Citadel} unexpectedly outperforms the native kernel in both contexts using \texttt{pipe()}. The readings are noisy, but statistically significant for buffers in the range 16 KiB to 8 MiB, and reproducible. The cause is again unknown, but observing that the native kernel's throughput halves after buffers of 8 KiB, we suspect that this is the result of cache exhaustion or inopportune paging. Notably, \textsc{Citadel}'s readings exhibit a far larger IQR for large buffer sizes than the native kernel, a side effect that is repeated in real-world testing.
 
 \begin{figure}[]
     \centering
@@ -172,9 +172,9 @@
 
 \paragraph{} To validate the performance results presented thusfar, we ported the entirety of the \textsc{Nginx} webserver\footnote{\url{https://www.nginx.com/}} to function alongside \textsc{Citadel}. No optimisations were made to the codebase --- the only changes made replaced core \texttt{libc} function calls to use their \texttt{c\_*} \texttt{libcitadel} counterpart.
 
-\paragraph{} Two trials were run; a low-latency benchmark\footnote{\url{https://github.com/wg/wrk}} and a 10GB HTTP file transfer (high-bandwidth). The webserver was configured to only run a single server process to ensure it was exercised to its full extent, and was setup to use the \textit{loopback} interface\footnote{\texttt{http://127.0.0.1/}.} to eliminate any interference from outside the OS. 
+\paragraph{} Two trials were run; a low-latency benchmark\footnote{\url{https://github.com/wg/wrk}} and a 10GB HTTP file transfer (high-bandwidth). The webserver was configured to only run a single server process to ensure it was exercised to its full extent, and was set up to use the \textit{loopback} interface\footnote{\texttt{http://127.0.0.1/}.} to eliminate any interference from outside the OS. 
 
-\paragraph{} The results are not suprising (Table~\ref{table:nginx-benchmarks}). For the low latency tests we observe the same $20-25$\% overhead as seen from TCP sockets in §~\ref{sec:ipc-microbenchmarks} using the same buffer size. The high-bandwidth tests show \textsc{Citadel} performing equally to the native kernel, only differing by its larger sample standard deviation. This trial is also interesting as this is the first time we see file descriptor revalidation happening automatically on \texttt{read()} and \texttt{write()}. 
+\paragraph{} The results are not surprising (Table~\ref{table:nginx-benchmarks}). For the low latency tests we observe the same $20-25$\% overhead as seen from TCP sockets in §~\ref{sec:ipc-microbenchmarks} using the same buffer size. The high-bandwidth tests show \textsc{Citadel} performing equally to the native kernel, only differing by its larger sample standard deviation. This trial is also interesting as this is the first time we see file descriptor revalidation happening automatically on \texttt{read()} and \texttt{write()}. 
 
 
 
@@ -232,7 +232,7 @@
 
 \section{Use Cases}
 
-\paragraph{} In the introduction, we laid out the motivation and goals for \textsc{Citadel}, including using it as a platform for reasoning about the relationship between an enclave and its host. A standard workflow for creating an SGX application uses a library OS, such as \textit{SGX-LKL}~\cite{priebe2019sgxlkl} and \textit{Graphene-SGX},~\cite{203255} to create a synthetic Linux environment inside the enclave supporting the primary application --- this approach subjects the enclave to some of the same flaws and issues as the underlying OS. Could we reach a point where the host OS is trusted to hold custody of sensitive assets, instead of a trend toward pure isolation?
+\paragraph{} In the introduction, we laid out the motivation and goals for \textsc{Citadel}, including using it as a platform for reasoning about the relationship between an enclave and its host. Standard workflows for creating an SGX application uses a library OS, such as \textit{SGX-LKL}~\cite{priebe2019sgxlkl} and \textit{Graphene-SGX},~\cite{203255} to create a synthetic Linux environment inside the enclave supporting the primary application --- this approach subjects the enclave to some of the same flaws and issues as the underlying OS. Could we reach a point where the host OS is trusted to hold custody of sensitive assets, instead of a trend toward pure isolation?
 
 \paragraph{} Two hypothetical scenarios are presented --- one requiring secrecy, and one integrity --- to illustrate how \textsc{Citadel} could aid enclave-application development.
 

@@ -51,6 +51,14 @@
 \usepackage{multirow}
 \usepackage{minted}
 \usepackage[mathscr]{euscript}
+\usepackage[toc,acronym,savewrites,seeautonumberlist]{glossaries}
+
+\newglossarystyle{mystyle}{%
+  \glossarystyle{long}%
+  \renewenvironment{theglossary}%
+     {\begin{longtable}{p{3cm}p{\glsdescwidth}}}%
+     {\end{longtable}}%
+}
 
 \renewcommand*{\backref}[1]{}
 \renewcommand*{\backrefalt}[4]{%
@@ -75,6 +83,8 @@
   }}%
 }
 
+% Glossary
+\input{glossary}
 
 %% START OF DOCUMENT
 \begin{document}
@@ -103,6 +113,8 @@
 \onehalfspacing
 
 %TC:endignore
+%TC:macro \footnote [0]
+%TC:macro \caption [0]
 %% START OF MAIN TEXT 
 \raggedbottom
 
@@ -182,6 +194,18 @@ static int __init module_init(void)
 \end{minted}
 \caption{Outline for a proof of concept kernel module to change a process's PID.}
 \end{listing}
+
+% The \Gls{latex} typesetting markup language is specially suitable 
+% for documents that include \gls{maths}. \Glspl{formula} are 
+% rendered properly an easily once one gets used to the commands.
+
+% Given a set of numbers, there are elementary methods to compute 
+% its \acrlong{gcd}, which is abbreviated \acrshort{gcd}. This 
+% process is similar to that used for the \acrfull{lcm}.
+
+\clearpage
+\printnoidxglossary[type=\acronymtype]
+\printnoidxglossary[style=mystyle, title=Special Terms, toctitle=List of terms]
 
 \bibliographystyle{unsrt} 
 \bibliography{references} 

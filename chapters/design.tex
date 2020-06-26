@@ -22,6 +22,7 @@
 \end{itemize}
 
 \section{Challenges}
+\label{sec:challenges}
 
 \begin{figure}[]
     \centering
@@ -31,17 +32,19 @@
     \label{fig:sgx-abstract-integration}
 \end{figure}
 
-\paragraph{} The natural location for a reference monitor is embedded directly into the kernel, in the path of \textit{syscalls'} control flows. \textit{CamFlow} does this using the LSM framework, silently tagging processes and other entities as they are encountered by the kernel, and additionally providing an external LSM-interface for any active changes. However, an SGX enclave is incompatible with this workflow (§~\ref{sec:sgx-no-kernel-mode}) as it cannot execute alongside kernel code. Thus a major, unavoidable design feature is that the reference monitor must be distributed across rings 0 and 3 --- an enclave \textit{policy} component, and an LSM for \textit{enforcement}.
+\paragraph{} The natural location for a reference monitor is embedded directly into the kernel, in the path of \textit{syscalls'} control flows. \textit{CamFlow} does this using the LSM framework, silently tagging processes and other entities as they are encountered by the kernel, and additionally providing an external LSM-interface for any active changes. However, an SGX enclave is incompatible with this workflow (§~\ref{sec:sgx-no-kernel-mode}) as it cannot execute alongside kernel code. Thus a significant, unavoidable design feature is that the reference monitor must be distributed across rings 0 and 3 --- an enclave \textit{policy} component, and an LSM for \textit{enforcement}.
 
 \paragraph{} The disruption this change causes could severely impact performance; Figure~\ref{fig:sgx-abstract-integration} highlights the significant change to overall control flow. Most notably, externalising part of the LSM to an enclave forces, in the worst case, an additional pair of context switches for each \textit{syscall}.
 
-\paragraph{} Given a ring-3 component is unavoidable, we seek to minimise the overhead caused by its integration, while maintaining \textit{safety} (every operation must be mediated). This problem is reminiscent of the ones that inspired the development of \textit{exokernels}~\cite{10.1145/224056.224076} --- both the drawbacks and opportunities of those approaches apply here.~\cite{10.1145/269005.266644} \textcolor{red}{More detail about why.}
+\paragraph{} Given a ring-3 component is unavoidable, we seek to minimise the overhead caused by its integration, while maintaining \textit{safety} (every operation must be mediated). This problem is reminiscent of the ones that inspired the development of \textit{exokernels}~\cite{10.1145/224056.224076} --- both the drawbacks and opportunities of those approaches apply here.~\cite{10.1145/269005.266644} 
+% TODO
+% \textcolor{red}{More detail about why.}
 
 \paragraph{} Two architectures, as illustrated in Figure~\ref{fig:sgx-integration}, were initially considered. 
 
 \begin{enumerate}
     \item An \textit{isolated} extension of the LSM. Only the security implementation communicates with the \textit{policy} enclave, acting as a na\"{i}ve reimplementation of a fully self-contained LSM, and using an additional kernel module as an I/O relay.
-    \item An \textit{integrated} userspace service, through which permission is \textit{requested} ahead of time and decisions stored in the LSM until needed. Back flow of information is facilitated asynchronously, but no additional kernel relay is required.
+    \item An \textit{integrated} userspace service, through which permission is \textit{requested} ahead of time and decisions stored in the LSM until needed. Backflow of information is facilitated asynchronously, but no additional kernel relay is required.
 \end{enumerate}
 
 
@@ -148,7 +151,7 @@
 \subsection{Transient Entities}
 \label{sec:transient-entities}
 
-\paragraph{} Alongside active and passive entities, we introduce a third type; \textit{transient} entities. These are passive entities that are privately held by an owning active entitiy; they are used to model Linux functions such as \texttt{pipe()} and unclaimed tainted files.
+\paragraph{} Alongside active and passive entities, we introduce a third type; \textit{transient} entities. These are passive entities that are privately held by an owning active entity; they are used to model Linux functions such as \texttt{pipe()} and unclaimed tainted files.
 
 \paragraph{} To facilitate this, all processes are assigned a unique tag $p \in \mathcal{T}$, and any files it creates are initially also be tagged with $p$. Using $\mathcal{P}$ as the set of all process identifiers, we define $\mathcal{I}$ as the function returning a process's transient identifier;
 
@@ -201,7 +204,7 @@
 
 \begin{enumerate}
     \item[---]\textbf{Active}. The only active entities in Linux are processes --- these require a plethora of markers and flags, including; \textit{taint} and its \textit{reservation list}.
-    \item[---] \textbf{Passive}. There are many forms of passive entity, the most prevalent being files and other inode-backed structures. These carry \textit{taint}, an \textit{identifier} (tag), and an \textit{anonymous flag}. Inode tracking is detailed first, with other types of passive entities, such as shared memory, discussed in §~4.X.\footnote{\textcolor{red}{Currently missing...}}
+    \item[---] \textbf{Passive}. There are many forms of passive entity, the most prevalent being files and other inode-backed structures. These carry \textit{taint}, an \textit{identifier} (tag), and an \textit{anonymous flag}. Inode tracking is detailed first, with other types of passive entities, such as shared memory, discussed in §~\ref{sec:shm}.
 \end{enumerate}
 
 \subsubsection{Identifiers}
@@ -212,7 +215,7 @@
 
 
 \subsubsection{Permissions} 
-\paragraph{} Tainted processes must hold a valid reservation to perform any operation that may allow data to flow to another entity; the code for this check is attached in Appendix X, and strictly follows the rules presented in §~\ref{sec:permissible-operations}. Untainted processes bypass all checks, and thus lie outside the IFC model; the security implications of this are discussed in §~\ref{sec:ifc-model-implications}
+\paragraph{} Tainted processes must hold a valid reservation to perform any operation that may allow data to flow to another entity (Appendix X) --- enforcement strictly follows the rules presented in §~\ref{sec:permissible-operations}. Untainted processes bypass all checks, and thus lie outside the IFC model; the security implications of this are discussed in §~\ref{sec:ifc-model-implications}
 
 
 \subsubsection{Reservation Cache} 
@@ -232,7 +235,9 @@
 \end{enumerate}
 
 
-\paragraph{\texttt{fork()}} In Linux, child processes are initially exact clones of their parent, with access to the same state and file descriptors. Thus children of tainted processes are also tainted, but importantly do not assume the same rights as their parents --- open file descriptors will not function without revalidation (§~\ref{sec:libcitadel}), and children must request the right to to their parent's transient entities to use pipes or similar.\footnote{Unrelated processes are unable to do this.} It is the policy enclave's responsibility to validate that the security contexts of the parent and child have not diverged. \footnote{\textcolor{red}{mention leakage through fd state}}
+\paragraph{\texttt{fork()}} In Linux, child processes are initially exact clones of their parent, with access to the same state and file descriptors. Thus children of tainted processes are also tainted, but importantly do not assume the same rights as their parents --- open file descriptors will not function without revalidation (§~\ref{sec:libcitadel}), and children must request the right to their parent's transient entities to use pipes or similar.\footnote{Unrelated processes are unable to do this.} It is the policy enclave's responsibility to validate that the security contexts of the parent and child have not diverged. 
+% TODO
+% \footnote{\textcolor{red}{mention leakage through fd state}}
 
 
 
@@ -278,7 +283,16 @@ citadel_response_t asm_handle_request (pid_t pid,
 \paragraph{} The policy module is interchangeable, but the enforcement interface acts as the backbone of the enclave. All requests are routed through it as a sanitsation step, detecting forgery or invalid data, and all information leaving it is formatted and signed\footnote{Encryption is discussed in §~\ref{sec:interdomain-comms}} as appropriate. The process of installing reservations created by the enforcement interface, on behalf of the policy module, is detailed in §~\ref{sec:interdomain-comms}.
 
 \subsubsection{\texttt{libtomcrypt}}
-\paragraph{} We ported \textit{libtomcrypt},\footnote{\url{https://github.com/libtom/libtomcrypt}} a leading open source cryptography library, to function inside an SGX enclave. This was necessary to support many encryption mechanisms the system requires, on top of those provided by SGX. This was achieved by replacing its backing precision arithmetic library with an SGX-aware version of \textit{GMP},\footnote{\url{https://github.com/intel/sgx-gmp}} and forcing it to statically allocate its memory (as SGX v1 lacks support for dynamic memory management). Further changes rewrote the internal random number generator to use the one provided by SGX, and rework its exception strategy to remove \texttt{abort()}, an illegal instruction inside an enclave.
+\paragraph{} We ported \textit{libtomcrypt},\footnote{\url{https://github.com/libtom/libtomcrypt}} a leading open-source cryptography library, to function inside an SGX enclave. This was necessary to support many encryption mechanisms the system requires, on top of those provided by SGX. This was achieved by replacing its backing precision arithmetic library with an SGX-aware version of \textit{GMP},\footnote{\url{https://github.com/intel/sgx-gmp}} and forcing it to statically allocate its memory (as SGX v1 lacks support for dynamic memory management). Further changes rewrote the internal random number generator to use the one provided by SGX, and rework its exception strategy to remove \texttt{abort()}, an illegal instruction inside an enclave.
+
+\subsubsection{Shared Memory}
+\label{sec:shm}
+\paragraph{} \textsc{Citadel} also supports the tagging and restriction of shared memory (SHM). This is managed not via a backing inode, but directly using \textit{System V} identifiers granted to allocated memory segments. Internally, restrictions function in the same way as files, but per-access mediation is not directly possible -- we can only detect when segments are allocated and attached. Thus this workflow requires special consideration, and a new reporting mechanism from the LSM back to the policy enclave. Using a specialised \textit{xattr} interface (\ref{eqn:shm-interface}) to drive a request-response model, the LSM tracks and reports the PIDs of everything that has touched an SHM segment. 
+
+\vspace{-5mm}
+\begin{align}
+    \texttt{security.citadel.shm.[shm\_id]} \rightarrow \{145, 267, 1120, ...\} \label{eqn:shm-interface}
+\end{align}
 
 \subsection{Communication Pathways}
 \label{sec:interdomain-comms}
@@ -310,7 +324,7 @@ citadel_response_t asm_handle_request (pid_t pid,
 
 \paragraph{} Given $E_S$ is only held sealed, any entity providing a valid challenge is trusted and considered part of the \textsc{Citadel} TCB. The challenger's PID is stored to detect any adversarial replay messages. RSA is only used for this initial exchange; it would be too slow to use for all messages. Thus the AES key provided in the response forms the basis of all future communication.
 
-\paragraph{} \textsc{Citadel} uses AES to protect sentitive messages as every SGX-capable processor supports \textit{AESNI}~\cite{aesni} to accelerate AES in hardware. SGX provides this natively inside enclaves, and the official \textit{Intel AESNI} driver is included in the mainline kernel. \textit{AESNI} provides an encryption bandwidth of over 1 Gbps,\footnote{Our experiments exceed this, but this value is fair given the plethora of processors supporting SGX.} far exceeding the capacity required, and thus adding negligable overhead. The system's AES key updates with every message sent from the enclave using an SGX-approved source of entropy;\footnote{$new \leftarrow old \oplus update$} this adds minimal overhead and constitutes good practice. A copy of the initial key presented in the challenge response is retained and used in cases when a static key is essential.
+\paragraph{} \textsc{Citadel} uses AES to protect sensitive messages as every SGX-capable processor supports \textit{AESNI}~\cite{aesni} to accelerate AES in hardware. SGX provides this natively inside enclaves, and the official \textit{Intel AESNI} driver is included in the mainline kernel. \textit{AESNI} provides an encryption bandwidth of over 1 Gbps,\footnote{Our experiments exceed this, however this value is fair given the plethora of processors supporting SGX.} far exceeding the capacity required, and thus adding negligible overhead. The system's AES key updates with every message sent from the enclave using an SGX-approved source of entropy;\footnote{$new \leftarrow old \oplus update$} this adds minimal overhead and constitutes good practice. A copy of the first key presented in the challenge-response is retained and used in cases when a static key is essential.
 
 \subsection{\texttt{libcitadel}}
 \label{sec:libcitadel}
@@ -363,7 +377,7 @@ int c_open(const char *pathname, int oflag, mode_t mode) {
 \label{lst:c_open}
 \end{listing}
 
-\paragraph{} A core challenge of the cache is relating open file descriptors to the permissions they require. This requires some manual work, including fetching its \textit{xattr} tag with \texttt{fgetxattr()} and estimating the expiration time of the LSM's underlying reservation. Ideally \texttt{libcitadel} requests revalidation just before expiry to ensure no unexpected drop in service; this is particulary important for applications unaware of \textsc{Citadel}.
+\paragraph{} A core challenge of the cache is relating open file descriptors to the permissions they require. This requires some manual work, including fetching its \textit{xattr} tag with \texttt{fgetxattr()} and estimating the expiration time of the LSM's underlying reservation. Ideally \texttt{libcitadel} requests revalidation just before expiry to ensure no unexpected drop-in service; this is particularly important for applications unaware of \textsc{Citadel}.
 
 \paragraph{} Special care has to be taken when handling child processes. As already discussed, children are given a copy of their parent process's state --- this includes its \texttt{libcitadel} cache. Although the LSM does not pass any reservations on to the child, \texttt{libcitadel} maintains the same \textit{expectation} cache. Entries in it are marked as invalid, to force the child to revalidate a file descriptor before first use. Additionally, we assume that a process trusts the initialisation code of its child, enabling \texttt{libcitadel} to delete the parent's \textit{ptoken} (§~\ref{sec:ptokens}); the \texttt{c\_fork()} function handles this automatically.
 
