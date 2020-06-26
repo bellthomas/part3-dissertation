@@ -269,6 +269,8 @@
 
 \paragraph{} Files can have additional, external, key-value pairs attached to them. These attributes, shortened to \textit{xattrs}, are permanent and saved to disk alongside the file's content. Values must be in the form of a null-terminated string, however they are optional and may be left empty if the attribute is just a flag. \textit{xattrs} are namespaced to define different classes of functionality; the \texttt{user} namespace is open to all (e.g. \texttt{user.example\_attribute}), but \texttt{trusted}, \texttt{system}, and \texttt{security} are reserved for specific uses by the kernel --- the \texttt{security} namespace belongs exclusively to LSMs (§~\ref{sec:lsm}).
 
+\subsubsection{\textit{sysfs}}
+\paragraph{} \textit{sysfs} is a pseudo-filesystem provided by the VFS, that the kernel uses to export its subsystems via a virtual file interface (\texttt{/sys}). Specific instantiations of \textit{sysfs} are used for various purposes --- for example, LSMs and \textit{SecurityFS} (\texttt{/sys/kernel/security}).
 
 
 
