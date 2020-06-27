@@ -62,7 +62,7 @@
 
 \paragraph{} Preliminary experiments showed that performance of the two architectures was similar in light workloads, but that \textit{Architecture 1} degrades significantly due to resource contention. Additionally, as will be explained in §~\ref{sec:citadel-tcb}, the dependence on a kernel module conflicts with the desired constrained TCB of the system. For these reasons \textit{Architecture 2} forms the basis of the prototype.
 
-\paragraph{} An additional challenge is one of incomplete information --- an enclave is not privy to internal kernel datastructures such as \texttt{task\_struct}, which will store the taint and capabilities of processes. A potential solution would be a request---response model via a custom kernel interface for any queries, though the performance impact would be severe, requiring additional context switches. Instead, the approach adopted creates an abstract interface that purposefully removes the minutiae of the underlying system. Any solution must be trustworthy and safe, and malicious entities must not be able to exploit any \textit{eventually consistent} components.~\cite{10.1145/1435417.1435432}
+\paragraph{} An additional challenge is one of incomplete information --- an enclave is not privy to internal kernel datastructures such as \texttt{task\_struct}, which will store the taint and capabilities of processes. A potential solution would be a request-response model via a custom kernel interface for any queries, though the performance impact would be severe, requiring additional context switches. Instead, the approach adopted creates an abstract interface that purposefully removes the minutiae of the underlying system. Any solution must be trustworthy and safe, and malicious entities must not be able to exploit any \textit{eventually consistent} components.~\cite{10.1145/1435417.1435432}
 
 \paragraph{} As a final comment, it must be noted that SGX is not flawless; §~\ref{sec:sgx-vulnerabilities} discusses the impact of this on the project.
 
@@ -274,7 +274,7 @@ citadel_response_t asm_handle_request (pid_t pid,
 
 \subsubsection{Host Application}
 
-\paragraph{} There are several steps before presenting requests to the resident policy module (§~\ref{sec:interdomain-comms}). Requests often refer to absolute filepaths, requiring retrieval of their tags, if they exist --- security \textit{xattrs} serve these requests. Translation is performed pre-emptively depending on the operation requested, and to minimise any lookup overhead, results are cached in a \textit{translation cache}. This is implemented using \textit{sparsehash},\footnote{\url{https://github.com/sparsehash/sparsehash}} and great care is taken to detect stale entities that may confuse the internal decision process.
+\paragraph{} There are several steps before presenting requests to the resident policy module (§~\ref{sec:interdomain-comms}). Requests often refer to absolute filepaths, requiring retrieval of their tags, if they exist --- security \textit{xattrs} serve these requests. Translation is performed pre-emptively depending on the operation requested, and results are cached in a \textit{translation cache} to minimise overhead. This is implemented using \textit{sparsehash},\footnote{\url{https://github.com/sparsehash/sparsehash}} and great care is taken to detect stale entities that may confuse the internal decision process.
 
 
 \subsubsection{Enforcement Interface}
@@ -389,7 +389,7 @@ int c_open(const char *pathname, int oflag, mode_t mode) {
 \paragraph{} Before a process may interact with \texttt{citadeld}, it must retrieve its \textit{ptoken} from the LSM.\footnote{Read from \texttt{/sys/kernel/security/citadel/ptoken}} The purpose of this (\ref{eqn:ptoken}) is twofold;
 \begin{enumerate}
     \item[a.] Inform \texttt{libcitadel} about the process's metadata in the eyes of the LSM, and
-    \item[b.] Provide an authenticable access token to present to \texttt{citadeld}, verifying the process's identity. This is AES encrypted using $K$, the system's designated static AES key, which is unknown to the process. 
+    \item[b.] Provide an authenticable access token to present to \texttt{citadeld}, verifying the process's identity. This encrypted using $K$, the system's designated static AES key, which is unknown to the process. 
 \end{enumerate}
 
 \vspace{-7mm}
@@ -418,7 +418,7 @@ uint64_t pid = cred.pid;
 
 \subsection{\textsc{Citadel} Build System}
 \label{sec:build-system}
-\paragraph{} Building \textsc{Citadel} requires both the kernel and policy enclave to be in agreement about the RSA keys to be used; without this building will fail. A preparatory script achieves this by;
+\paragraph{} Building \textsc{Citadel} requires both the kernel and policy enclave to be in agreement about the shared RSA keys; without this compilation will fail. A preparatory script achieves this by;
 
 \begin{enumerate}
     \item Downloading the kernel's source and inserting the \textsc{Citadel} LSM.

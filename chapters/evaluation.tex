@@ -172,7 +172,7 @@
     \label{table:nginx-benchmarks}
 \end{table}
 
-\paragraph{} To validate the performance results presented thusfar, we ported the entirety of the \textsc{Nginx} webserver\footnote{\url{https://www.nginx.com/}} to function alongside \textsc{Citadel}. No optimisations were made to the codebase --- the only changes made replaced core \texttt{libc} function calls to use their \texttt{c\_*} \texttt{libcitadel} counterpart.
+\paragraph{} To validate the performance results presented thusfar, we ported the entirety of the \textsc{Nginx} webserver\footnote{\url{https://www.nginx.com/}} to function alongside \textsc{Citadel}. No optimisations were made to the codebase --- the only changes made replaced core \texttt{libc} function calls to use their \texttt{c\_*} \texttt{libcitadel} counterparts.
 
 \paragraph{} Two trials were run; a low-latency benchmark\footnote{\url{https://github.com/wg/wrk}} and a 10GB HTTP file transfer (high-bandwidth). The webserver was configured to only run a single server process to ensure it was exercised to its full extent, and was set up to use the \textit{loopback} interface\footnote{\texttt{http://127.0.0.1/}.} to eliminate any interference from outside the OS. 
 
@@ -197,9 +197,9 @@
     \item[---] The Intel \textit{AESNI} Linux driver. 
 \end{itemize}
 
-\paragraph{} Essentially, we assume that the build environment is entirely trusted; preparation need not be done on the final system. A notable exclusion from the TCB is the majority of Linux drivers and other kernel modules --- this was a strong motivation for using SGX, as it can effectively defend against malicious and misbehaving ring-0 parties. 
+\paragraph{} We also assume that the build environment is entirely trusted. A notable exclusion from the TCB is the majority of Linux drivers and other kernel modules --- this was a strong motivation for using SGX, as it can effectively defend against malicious and misbehaving ring-0 parties. 
 
-\paragraph{} However, how might the system defend against \texttt{citadeld}, an unprivileged, userspace application, being replaced by a malicious adversary?
+\paragraph{} However, how might the system defend against \texttt{citadeld}, an un\-privileged, user\-space application, being replaced by a malicious adversary?
 
 % \begin{enumerate}
 %     \item How does the system defend against \texttt{citadeld}, an unprivileged, userspace application, from being replaced by a malicious adversary?
@@ -210,18 +210,20 @@
 
 \paragraph{} Secondly, can the kernel actually be held to the same integrity level as an enclave? How trustable is a system that enclaves can only attest to half of?
 
-\paragraph{} Enclaves are unique in that their online attestation process inspires absolute trust, but offline provenance can be equally valuable. Although not SGX-based, \textit{UEFI Secure Boot}~\cite{Richardson2013UefiSB} is an industry-standard mechanism for verifying that an OS is legitimate. Ensuring that a \textsc{Citadel} system's installation is properly signed by a trusted party defends against many types of attack. One example that \textsc{Citadel} cannot defend against has a malicious superuser compiling a new kernel with a modified LSM, using valid keys scraped from the Linux system binary, and booting into it to bypass \textsc{Citadel}'s protections. Although not a bespoke solution, verifying an OS is well-explored and thus not a direct concern for this work. Additional protections include Linux's \textit{Integrity Measurement Architecture} (§~\ref{sec:ima}).
+\paragraph{} Enclaves are unique in that their online attestation process inspires absolute trust, but offline provenance can be equally valuable. Although not SGX-based, \textit{UEFI Secure Boot}~\cite{Richardson2013UefiSB} is an industry-standard mechanism for verifying whether an OS is legitimate. Ensuring that a \textsc{Citadel} system's installation is properly signed by a trusted party defends against many types of attack. 
 
-\paragraph{} Thirdly, does the core kernel protects itself adequately from malicious kernel modules?
+\paragraph{} One example that \textsc{Citadel} cannot defend against has a malicious superuser compiling a new kernel with a modified LSM, using valid keys scraped from the Linux system binary, and booting into it to bypass \textsc{Citadel}'s protections. Although not a bespoke solution, verifying an OS is well-explored and thus not a direct concern for this work. Additional protections include Linux's \textit{Integrity Measurement Architecture} (§~\ref{sec:ima}).
+
+\paragraph{} Thirdly, does the kernel protects itself adequately from malicious kernel modules?
 
 \paragraph{} Effective protection is possible if carefully executed. Appendix~\ref{appendix:pid-tampering} presents a proof of concept kernel module that changes a process's PID dynamically. This is highly concerning, as a process's PID is its core identifier in \textsc{Citadel}'s eyes; defence was discussed in §~\ref{sec:pid-protection}. The Linux kernel is a soup of \textit{exported} and \textit{unexported symbols},\footnote{Symbols include functions and variables held in the global namespace; exporting is the process of exposing it publicly to be called by third parties.} which is exploitable to access internal functions never designed to be called from a different context. This work does not assess the implications for the LSM framework, but highlights the potential need for \textit{defensive programming} when designing the LSM.
 
-\paragraph{} Thus we firmly believe that \textsc{Citadel}, with its restricted TCB, can be trustworthy, creating a system of integrity checks based upon, and complementing, the trust placed in SGX itself.
+\paragraph{} We believe that \textsc{Citadel}, with its restricted TCB, can be trustworthy, creating a system of integrity checks based upon, and complementing, the trust placed in SGX itself.
 
 \subsection{IFC Model Implications}
 \label{sec:ifc-model-implications}
 
-\paragraph{} The \textsc{Citadel} IFC model deviates from the designs and implementations of Pasquier et al. and Krohn et al. in three key ways;
+\paragraph{} The \textsc{Citadel} \acrshort{ifc} model deviates from the designs and implementations of Pasquier et al. and Krohn et al. in three key ways;
 \begin{enumerate}
     \item Policy and enforcement decision are separated.
     \item Passive entities may exist in a temporary \textit{transient} state.
@@ -244,9 +246,9 @@
 
 \paragraph{} Two hypothetical scenarios are presented --- one requiring secrecy, and one integrity --- to illustrate how \textsc{Citadel} could aid enclave-application development.
 
-\paragraph{Scenario 1} A social-media company provides a GDPR platform, through which members request an archive of their data and other assets; these may be over 10~GB. Processing and collation happen inside an enclave, and an external service authenticates requests. Must the enclave seal archives after creation, before storage, and unseal them when requested? A solution using \textsc{Citadel} may offload unencrypted archives to the custody of the host OS, using IFC's secrecy mechanic to prevent unauthorised release. On request, the webserver requests permission to declassify the archive from the authentication authority --- no penalty need be paid for encryption.\footnote{Disk encryption should be used for offline protection.}
+\paragraph{Scenario 1} A social-media company provides a GDPR platform, through which members request an archive of their data and other assets; these may be over 10~GB. Processing and collation happen inside an enclave, and an external service authenticates requests. Must the enclave seal archives after creation, before storage, and unseal them when requested? A solution using \textsc{Citadel} may offload unencrypted archives to the custody of the host OS, using \acrshort{ifc}'s secrecy mechanic to prevent unauthorised release. On request, the webserver requests permission to declassify the archive from the authentication authority --- no penalty need be paid for encryption.\footnote{Disk encryption should be used for offline protection.}
 
 
-\paragraph{Scenario 2} An Apache Spark application partitions input data into a large number of shards. Assuming that shard-processing is protected inside an enclave, do shards need to be cryptographically signed to verify their provenance? \textsc{Citadel} would entrust this tracking to the policy enclave, which, once attested may be considered a part of the application's trusted components.
+\paragraph{Scenario 2} An Apache Spark application partitions input data into a large number of shards. Assuming that shard-processing is protected inside an enclave, do shards need to be cryptographically signed to verify their provenance? \textsc{Citadel} would entrust this tracking to the policy enclave, which, once attested, may be considered a part of the application's trusted components.
 
 \paragraph{} Although \textsc{Citadel} may not be suitable for the most sensitive processing tasks --- enclaves are still vital here --- it offers a lightweight protection mechanism that could potentially be, in the interest of performance, trusted in a supporting role.

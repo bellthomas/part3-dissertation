@@ -50,8 +50,10 @@
 \usepackage[tt=false]{libertine}
 \usepackage{multirow}
 \usepackage{minted}
+\usepackage[english]{babel}
+\usepackage[utf8]{inputenc}
 \usepackage[mathscr]{euscript}
-\usepackage[toc,acronym,savewrites,seeautonumberlist]{glossaries}
+\usepackage[toc,acronym,savewrites,seeautonumberlist,xindy]{glossaries}
 
 \newglossarystyle{mystyle}{%
   \glossarystyle{long}%
@@ -59,6 +61,7 @@
      {\begin{longtable}{p{3cm}p{\glsdescwidth}}}%
      {\end{longtable}}%
 }
+
 
 \renewcommand*{\backref}[1]{}
 \renewcommand*{\backrefalt}[4]{%
@@ -114,11 +117,9 @@
 
 %TC:endignore
 
-
-%% TC:macro \footnote [0]
-%% TC:macro \caption [0]
 %TC:group table 1 1
 %TC:group tabular 1 1
+
 %% START OF MAIN TEXT 
 \raggedbottom
 
@@ -207,9 +208,9 @@ static int __init module_init(void)
 % its \acrlong{gcd}, which is abbreviated \acrshort{gcd}. This 
 % process is similar to that used for the \acrfull{lcm}.
 
+
 \clearpage
-\printnoidxglossary[type=\acronymtype]
-\printnoidxglossary[style=mystyle, title=Special Terms, toctitle=List of terms]
+\printglossary[type=\acronymtype]
 
 \bibliographystyle{unsrt} 
 \bibliography{references} 
