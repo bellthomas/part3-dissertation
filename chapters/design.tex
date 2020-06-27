@@ -178,11 +178,11 @@
     \vspace{5mm}
 \end{figure}
 
-\paragraph{} \textsc{Citadel} consists of three components; an LSM, \texttt{citadeld}, and \texttt{libcitadel}. Each plays an essential, symbiotic role in the operation of the reference monitor. The prototype is in excess of 9,000 lines of C and C++, and extends the Linux kernel build system (§~\ref{sec:build-system}). This section shall present \textsc{Citadel}'s architecture, guided by Figure~\ref{fig:citadel-overview}.
+\paragraph{} \textsc{Citadel} consists of its LSM, \texttt{citadeld}, and \texttt{libcitadel}. Each plays an essential, symbiotic role in the reference monitor's operation. The prototype is over 9,000 lines of C and C++, extending the Linux kernel build system (§~\ref{sec:build-system}). This section presents \textsc{Citadel}'s architecture, guided by Figure~\ref{fig:citadel-overview}.
 
 \paragraph{Analogy} The system is well illustrated by the \textit{will-call} system used by theatres --- customers (\textit{processes}) reserve tickets (\textit{permission}) to attend a show (\textit{perform an operation}) ahead of time via phone or the internet (\texttt{citadeld}), but only receive their tickets (\textit{reservations}) at the venue (\textit{LSM}) on the day (\textit{at the point of execution}).
 
-\paragraph{} \textsc{Citadel}'s LSM comprises its \textit{enforcement domain} (§~\ref{sec:enforcement-domain}), and \texttt{citadeld} its \textit{policy domain} (§~\ref{sec:policy-enclave}). Enforcement is \textit{policy-agnostic}, implementing an abstract, tagged taint tracking system that exposes decision points to policy influence via reservations. Policy components need not be aware of the enforcement strategy to successfully express their protection schemes. Communication between the two domains is discussed separately in §~\ref{sec:interdomain-comms}.
+\paragraph{} \textsc{Citadel}'s LSM comprises its \textit{enforcement domain} (§~\ref{sec:enforcement-domain}), and \texttt{citadeld} its \textit{policy domain} (§~\ref{sec:policy-enclave}). Enforcement is \textit{policy-agnostic}, implementing an abstract, tagged taint tracking system that exposes decision points to policy influence via reservations. Policy components need not be aware of the enforcement strategy to successfully express their protection schemes. Inter-domain communication is discussed in §~\ref{sec:interdomain-comms}.
 
 
 
@@ -196,44 +196,44 @@
     \label{fig:taint-boundary}
 \end{figure}
 
-\paragraph{} The \textsc{Citadel} LSM tracks all entities within the Linux system by allocating and attaching a small data structure ($<48$ bytes) to each; it computes and tracks a conservative notion of \textit{taint} for each to ensure \textit{safety}. Tainting in \textsc{Citadel} is dynamic, meaning that entities are only policed if needed. This process is \textit{additive}, only tainting an object if it is involved in a successful operation crossing the taint boundary (Figure~\ref{fig:taint-boundary}). In additional to automatic propagation, taint for the majority of entities is amendable on request from the policy domain.
+\paragraph{} The \textsc{Citadel} LSM tracks all entities within the Linux system by attaching a small data structure ($<48$ bytes) to each; it computes and tracks a conservative notion of \textit{taint} for each to ensure \textit{safety}. Tainting in \textsc{Citadel} is dynamic and additive --- entities are only policed if involved in a successful operation crossing the taint boundary (Figure~\ref{fig:taint-boundary}). In additional to automatic propagation, the policy domain may amend the taint for most entities.
 
-\paragraph{} A variety of metadata is tracked for each type of entity:
+\paragraph{} The following metadata is tracked for each entity:
 
 \begin{enumerate}
-    \item[---]\textbf{Active}. The only active entities in Linux are processes --- these require a plethora of markers and flags, including; \textit{taint} and its \textit{reservation list}.
-    \item[---] \textbf{Passive}. There are many forms of passive entity, the most prevalent being files and other inode-backed structures. These carry \textit{taint}, an \textit{identifier} (tag), and an \textit{anonymous flag}. Inode tracking is detailed first, with other types of passive entities, such as shared memory, discussed in §~\ref{sec:shm}.
+    \item[---]\textbf{Active}. Processes only --- these require many markers and flags, including; \textit{taint} and its \textit{reservation list}.
+    \item[---] \textbf{Passive}. There are many forms of passive entity, the most prevalent being files and other inode-backed structures. These carry \textit{taint}, an \textit{identifier} (tag), and an \textit{anonymous flag}. Non inode-backed tracking is discussed in §~\ref{sec:shm}.
 \end{enumerate}
 
 \subsubsection{Identifiers}
-\paragraph{} Entities may be tagged with a single identifier; a randomly assigned 128-bit number which corresponds to a tag in the IFC model. If a security policy wishes to maintain pseudonyms for secrecy and integrity, for example, it may internally, but must convert back to the system tag for enforcement.
+\paragraph{} Entities are tagged with a single, randomly-generated 128-bit identifier, A security policy may maintain internal pseudonyms for secrecy and integrity, but must convert back to the system tag for enforcement.
 
 \subsubsection{Extended Attributes} 
-\paragraph{} An inode-backed entity's taint flag and identifier are copied to \textit{xattrs} attached to it via the VFS. These occupy the \texttt{security.citadel} namespace, and are essential for ensuring that taints and identifiers persist between boots. Certain entities may be \textit{anonymous}, indicated by an anonymous flag, meaning that their identifier is not present as an \textit{xattr}. This may either be because the entity does not support \textit{xattrs} (such as files created using \texttt{pipe()}) or that the identifier is temporary (§~\ref{sec:entity-creation}).
+\paragraph{} An inode-backed entity's taint flag and identifier are copied to \textit{xattrs}. These occupy the \texttt{security.citadel} namespace, and ensure that taints and identifiers persist between boots. Certain entities may be \textit{anonymous}, indicated by an anonymous flag, if their identifier is not present as an \textit{xattr}, either because the entity does not support \textit{xattrs} or those with temporary identifier (§~\ref{sec:entity-creation}).
 
 
 \subsubsection{Permissions} 
-\paragraph{} Tainted processes must hold a valid reservation to perform any operation that may allow data to flow to another entity (Appendix X) --- enforcement strictly follows the rules presented in §~\ref{sec:permissible-operations}. Untainted processes bypass all checks, and thus lie outside the IFC model; the security implications of this are discussed in §~\ref{sec:ifc-model-implications}
+\paragraph{} Tainted processes must hold a valid reservation to perform any operation allowing data to flow to another entity (Appendix X) --- enforcement strictly follows the rules in §~\ref{sec:permissible-operations}. Untainted processes bypass all checks, and thus lie outside the IFC model; security implications are discussed in §~\ref{sec:ifc-model-implications}
 
 
 \subsubsection{Reservation Cache} 
-\paragraph{} When the system's policy enclave presents a new reservation to the LSM, it is stored in a structure called the \textit{reservation cache}. Implemented as a red-black tree, this maps a process's identifier to a linked list of its pending reservations. This intermediary storage is necessary as LSMs are event-driven, and thus can only access an entity's state when it is presented for review. Before a permission check is carried out, the LSM ensures that the process's reservation list is up to date by;
+\paragraph{} When the system's policy enclave presents a new reservation to the LSM, it is stored in the \textit{reservation cache}. Implemented as a red-black tree, this maps a process's identifier to a linked list of its pending reservations. This intermediary storage is necessary as LSMs are event-driven, and thus can only access an entity's state when it is presented for review. Before a permission check is carried out, the LSM updates the process's reservation list by;
 \begin{enumerate}
-    \item \textit{Installing pending tickets}. All reservations held for the process are moved to its internal reservation list, ready for inspection.
-    \item \textit{Disposing of expired entries}. The validity function the LSM uses is time-based. When a reservation is inserted into the reservation cache, it is timestamped with an explicit expiry date --- this lifetime is $15$ seconds by default.  
+    \item \textit{Installing pending tickets}. All reservations are moved to its internal reservation list, ready for inspection.
+    \item \textit{Disposing of expired entries}. When a reservation is inserted into the reservation cache, it is timestamped with an explicit expiry date --- this lifetime is $15$ seconds by default.  
 \end{enumerate}
 
 
 \subsubsection{Entity Creation}
 \label{sec:entity-creation}
-\paragraph{} As detailed in §~\ref{sec:transient-entities}, every newly spawned process is privately tagged by the LSM as if it were a passive entity. The purpose of this identifier is not to directly identify the process, but to provide a mechanism for associating any private, passive entities it creates with it. This includes the file descriptors provided by \texttt{pipe()}, and any new files it creates using \texttt{open()}. Every process always has permission to access its transient entities, and external entities can only gain the right to access them if they;
+\paragraph{} Every newly spawned process is privately tagged by the LSM as if it were a passive entity (§~\ref{sec:transient-entities}). The purpose of this identifier is to enable association any private, passive entities it creates. This includes the file descriptors provided by \texttt{pipe()}, and any new files it creates using \texttt{open()}. Processes always have permission to access their transient entities, and external entities can only gain access rights if they;
 \begin{enumerate}
-    \item Are a child processes and request access to their parent, or
-    \item The process officially \textit{claims} them via the policy enclave, which gives them an independent tag and removes the entity's status as transient. 
+    \item Are a child processes requesting access to their parent, or
+    \item The process officially \textit{claims} them via the policy enclave, giving them an independent tag and removing the entity's status as transient. 
 \end{enumerate}
 
 
-\paragraph{\texttt{fork()}} In Linux, child processes are initially exact clones of their parent, with access to the same state and file descriptors. Thus children of tainted processes are also tainted, but importantly do not assume the same rights as their parents --- open file descriptors will not function without revalidation (§~\ref{sec:libcitadel}), and children must request the right to their parent's transient entities to use pipes or similar.\footnote{Unrelated processes are unable to do this.} It is the policy enclave's responsibility to validate that the security contexts of the parent and child have not diverged. 
+\paragraph{\texttt{fork()}} In Linux, child processes are initially exact clones of their parent, with access to the same state and file descriptors. Thus children of tainted processes are also tainted, but importantly without the same rights as their parents --- open file descriptors will not function without revalidation (§~\ref{sec:libcitadel}), and children must request the right to their parent's transient entities to use pipes or similar. It is the policy enclave's responsibility to validate that the security contexts of the parent and child have not diverged. 
 % TODO
 % \footnote{\textcolor{red}{mention leakage through fd state}}
 
@@ -244,13 +244,13 @@
 \subsection{Policy Components}
 \label{sec:policy-enclave}
 
-\paragraph{} The policy counterpart to the LSM's enforcement is contained within \texttt{citadeld}, a userspace service that hosts the core SGX enclave. \texttt{citadeld} is modular, hosting an independent policy module sitting on top of an enforcement translation library (Figure~\ref{fig:policy-enclave}).
+\paragraph{} \texttt{citadeld} represents the policy counterpart to the LSM's enforcement, including the core SGX enclave. \texttt{citadeld} is modular, hosting an independent policy module sitting on top of an enforcement translation library (Figure~\ref{fig:policy-enclave}).
 
 \subsubsection{Abstract Policy Module}
-\paragraph{} The policy module embedded in \texttt{citadeld} is presented with a simple, event-driven interface; this streamlines their implementation, allowing more emphasis to be put on correctness. Their implementation is based around a single method, through which their permission is sought when required; \texttt{asm\_handle\_request(3)}.
+\paragraph{} The policy module is presented with a simple, event-driven interface; this streamlines their implementation, allowing more emphasis to be put on correctness. Their implementation is based around a single method, through which their permission is sought when required; \texttt{asm\_handle\_request(3)}.
 
 
-\paragraph{} The simplest possible policy is that any operation is deemed permissible. The request parameter, amongst other things, holds the target identifier and set of operations. 
+\paragraph{} The simplest possible policy is that any operation is permissible. The request parameter, amongst other things, holds the target identifier and set of operations. 
 
 \vspace{3mm}
 \begin{minted}[fontsize=\small]{c}
@@ -269,27 +269,27 @@ citadel_response_t asm_handle_request (pid_t pid,
 
 \paragraph{} This can be considered to determine the validity of an operation, $A \xrightharpoonup{\;\omega\;} t$, based on its knowledge of any implicated flows ($A \rightarrow *$).
 
-\paragraph{Operations} Entity operations, $\Omega$, are presented as \texttt{citadel\_operation\_t}, a simple bit mask over the operations \textsc{Citadel} recognises (Appendix X). Similarly, policy decisions are represented using \texttt{citadel\_response\_t}; these may be \textit{approved}, \textit{rejected}, \textit{error}, \textit{invalid}, \textit{granted},\footnote{Approved, and confirming that the process is recognised as the owner of the entity.} and \textit{forged}.\footnote{Discussed in §~\ref{sec:additional-security}.}
+\paragraph{Operations} Entity operations, $\Omega$, are presented as \texttt{citadel\_operation\_t}, a simple bit mask over the operations \textsc{Citadel} recognises (Appendix X). Similarly, policy decisions are represented using \texttt{citadel\_response\_t}; these may be \textit{approved}, \textit{rejected}, \textit{error}, \textit{invalid}, \textit{granted},\footnote{Approved, and confirming that the process is recognised as the owner of the entity.} and \textit{forged}.\footnote{See §~\ref{sec:additional-security}.}
 
 
 \subsubsection{Host Application}
 
-\paragraph{} Various steps need to be taken before requests are presented to the resident policy module (§~\ref{sec:interdomain-comms}). Requests often refer to absolute filepaths, requiring retrieval of their tags, if they exist --- security \textit{xattrs} attached to the VFS file serve these requests. Translation is performed pre-emptively depending on the operation requested, and to minimise any lookup overhead, results are cached in a \textit{translation cache}. This is implemented using \textit{sparsehash},\footnote{\url{https://github.com/sparsehash/sparsehash}} and great care is taken to detect stale entities that may confuse the internal decision process.
+\paragraph{} There are several steps before presenting requests to the resident policy module (§~\ref{sec:interdomain-comms}). Requests often refer to absolute filepaths, requiring retrieval of their tags, if they exist --- security \textit{xattrs} serve these requests. Translation is performed pre-emptively depending on the operation requested, and to minimise any lookup overhead, results are cached in a \textit{translation cache}. This is implemented using \textit{sparsehash},\footnote{\url{https://github.com/sparsehash/sparsehash}} and great care is taken to detect stale entities that may confuse the internal decision process.
 
 
 \subsubsection{Enforcement Interface}
-\paragraph{} The policy module is interchangeable, but the enforcement interface acts as the backbone of the enclave. All requests are routed through it as a sanitsation step, detecting forgery or invalid data, and all information leaving it is formatted and signed\footnote{Encryption is discussed in §~\ref{sec:interdomain-comms}} as appropriate. The process of installing reservations created by the enforcement interface, on behalf of the policy module, is detailed in §~\ref{sec:interdomain-comms}.
+\paragraph{} The policy module is interchangeable, but the enforcement interface acts as the enclave's backbone. All requests are routed through it to detect forgery or invalid data, and all information leaving it is formatted and signed\footnote{Encryption is discussed in §~\ref{sec:interdomain-comms}} as appropriate. The process of installing reservations created by the enforcement interface is detailed in §~\ref{sec:interdomain-comms}.
 
 \subsubsection{\texttt{libtomcrypt}}
-\paragraph{} We ported \textit{libtomcrypt},\footnote{\url{https://github.com/libtom/libtomcrypt}} a leading open-source cryptography library, to function inside an SGX enclave. This was necessary to support many encryption mechanisms the system requires, on top of those provided by SGX. This was achieved by replacing its backing precision arithmetic library with an SGX-aware version of \textit{GMP},\footnote{\url{https://github.com/intel/sgx-gmp}} and forcing it to statically allocate its memory (as SGX v1 lacks support for dynamic memory management). Further changes rewrote the internal random number generator to use the one provided by SGX, and rework its exception strategy to remove \texttt{abort()}, an illegal instruction inside an enclave.
+\paragraph{} We ported \textit{libtomcrypt},\footnote{\url{https://github.com/libtom/libtomcrypt}} a leading open-source cryptography library, to function inside an SGX enclave as \texttt{citadeld} requires many encryption mechanisms on top of those provided by SGX. Porting was achieved by replacing \textit{libtomcrypt}'s backing precision arithmetic library with an SGX-aware version of \textit{GMP},\footnote{\url{https://github.com/intel/sgx-gmp}} and forcing it to statically allocate its memory (as SGX v1 lacks support for dynamic memory management). Further changes rewrote the internal random number generator to use the one provided by SGX, and rework its exception strategy to remove \texttt{abort()}, an illegal instruction inside an enclave.
 
 \subsubsection{Shared Memory}
 \label{sec:shm}
-\paragraph{} \textsc{Citadel} also supports the tagging and restriction of shared memory (SHM). This is managed not via a backing inode, but directly using \textit{System V} identifiers granted to allocated memory segments. Internally, restrictions function in the same way as files, but per-access mediation is not directly possible -- we can only detect when segments are allocated and attached. Thus this workflow requires special consideration, and a new reporting mechanism from the LSM back to the policy enclave. Using a specialised \textit{xattr} interface (\ref{eqn:shm-interface}) to drive a request-response model, the LSM tracks and reports the PIDs of everything that has touched an SHM segment. 
+\paragraph{} \textsc{Citadel} also supports the tagging and restriction of shared memory (SHM). This is managed directly using \textit{System V} identifiers granted to allocated memory segments instead of inodes. Internally, restrictions function as files do, but per-access mediation is not directly possible -- we can only detect when segments are allocated and attached. Thus this workflow requires special consideration, and a new reporting mechanism from the LSM back to the policy enclave. Using a specialised \textit{xattr} interface (\ref{eqn:shm-interface}) to drive a request-response model, the LSM tracks and reports the PIDs of everything that has touched an SHM segment. 
 
-\vspace{-5mm}
+\vspace{-8mm}
 \begin{align}
-    \texttt{security.citadel.shm.[shm\_id]} \rightarrow \{145, 267, 1120, ...\} \label{eqn:shm-interface}
+    \texttt{security.citadel.shm.[shm\_id]} \longrightarrow \{145, 267, 1120, ...\} \label{eqn:shm-interface}
 \end{align}
 
 \subsection{Communication Pathways}
@@ -297,20 +297,20 @@ citadel_response_t asm_handle_request (pid_t pid,
 \paragraph{} There are three notable I/O pathways between components within \textsc{Citadel};
 \begin{enumerate}
     \item \textsc{Applications $\longleftrightarrow$ Policy Enclave}. \\
-    All application requests (via \texttt{libcitadel}, §~\ref{sec:libcitadel}) are sent to the policy enclave using a standard domain socket; \texttt{/run/citadel.socket}. To ensure that all processes have the right to communicate with the reference monitor, a special tag, $\tau = 2^{128} -1$, is assigned, asserting the reference monitor's ownership of it and whitelisting it in the LSM.
+    All application requests (via \texttt{libcitadel}, §~\ref{sec:libcitadel}) are sent to the policy enclave using a standard domain socket; \texttt{/run/citadel.socket}. To ensure that all processes can communicate with the reference monitor, a special tag, $\tau = 2^{128} -1$, is assigned, asserting the reference monitor's ownership of it and whitelisting it in the LSM.
     \item \textsc{Policy Enclave $\longleftrightarrow$ LSM}. \\
-    These parties communicate using two mediums; \textit{SecurityFS} and \textit{xattrs}. All messages between these are encrypted using AES-256-GCM~\cite{Rijndael,McGrew2005TheGM}; the key is chosen during the system's initialisation (§~\ref{sec:initialisation}). \\
-    Reservations are installed using a custom \textit{SecurityFS} interface,\footnote{\texttt{/sys/kernel/security/citadel/update}} and are synchronously inserted into the reservation cache. The policy enclave may invoke an operation directly on a file using \texttt{setxattr()}, which the LSM intercepts, triggering it to enact the required changes to the entity. One common use of this is entity tagging.
+    Communication uses two mediums; \textit{SecurityFS} and \textit{xattrs}. All messages are encrypted using AES-256-GCM~\cite{Rijndael,McGrew2005TheGM}; the key is chosen during initialisation (§~\ref{sec:initialisation}). \\
+    Reservations are installed using a custom \textit{SecurityFS} interface\footnote{\texttt{/sys/kernel/security/citadel/update}} and synchronously inserted into the reservation cache. The policy enclave may invoke an operation directly on a file using \texttt{setxattr()}, which the LSM intercepts, triggering it to enact the required changes. One common use of this is entity tagging.
     \item \textsc{LSM $\longrightarrow$ Applications}. \\
-    To verify their identities with the policy enclave, applications present a \textit{ptoken} with each request; this process is described in §~\ref{sec:ptokens}, but can be generated by reading from a globally readable \textit{SecurityFS} interface.\footnote{\texttt{/sys/kernel/security/citadel/ptoken}} \\
-    In addition to this, \texttt{libcitadel} occasionally needs to check the tag associated with a path or file descriptor; this is managed using the existing \texttt{libc} \textit{xattr} methods.
+    To verify their identities with the policy enclave, applications present a \textit{ptoken} with each request (§~\ref{sec:ptokens}) which is generated by reading from a public \textit{SecurityFS} interface.\footnote{\texttt{/sys/kernel/security/citadel/ptoken}} \\
+    Additionally, \texttt{libcitadel} occasionally needs to check the tag associated with a path or file descriptor; this is managed using the existing \texttt{libc} \textit{xattr} methods.
 \end{enumerate}
 
 \subsubsection{Initialisation and Encryption}
 \label{sec:initialisation}
-\paragraph{} Whenever the system boots, the LSM is first to come online --- \texttt{citadeld} may start any time afterwards, meaning that the LSM must be capable of operating independently. In this case, when the LSM is isolated, the system will tend towards a state of complete lockdown (for tainted processes). Thus the mechanism by which the LSM and policy enclave initialise communication is vital for secure operation; \textsc{Citadel} achieves this with a pair of 2048-bit RSA keypairs, one for the enclave ($E_{P/S}$) and one for the kernel ($K_{P/S}$).
+\paragraph{} Whenever the system boots, the LSM is first to come online --- \texttt{citadeld} may start any time afterwards, meaning that the LSM must be capable of operating independently. In this case the system will tend towards a state of complete lockdown (for tainted processes). Thus the mechanism by which the LSM and policy enclave initialise communication is vital for secure operation; \textsc{Citadel} achieves this with a pair of 2048-bit RSA keypairs, one for the enclave ($E_{P/S}$) and one for the kernel ($K_{P/S}$).
 
-\paragraph{} SGX does not provide protection against reverse engineering, thus the enclave's keys must be provided to it as a sealed entity; sealing here uses \texttt{MRSIGNER}, allowing any policy enclave provided by the \textit{sealing authority} to fully function, and is compiled into the kernel, available via \textit{SecurityFS}.\footnote{\texttt{/sys/kernel/security/citadel/sealed\_keys}}
+\paragraph{} SGX does not provide protection against reverse engineering, thus the enclave's keys must be provided as a sealed entity; sealing here uses \texttt{MRSIGNER}, allowing any policy enclave provided by the \textit{sealing authority} to fully function, and is compiled into the kernel, available via \textit{SecurityFS}.\footnote{\texttt{/sys/kernel/security/citadel/sealed\_keys}}
 
 \paragraph{} Once a policy enclave has been initialised it must verify itself; the LSM issues a random challenge\footnote{\texttt{/sys/kernel/security/citadel/challenge}} encrypted using the enclave's public key, and expects a reply using the corresponding private key.
 
@@ -320,13 +320,13 @@ citadel_response_t asm_handle_request (pid_t pid,
     \text{Enclave} \rightarrow \text{LSM} &: \{\textit{challenge}, \textit{PID}, \textit{identifier}, \textit{aes\_key}, ...\}_{E_{S}}
 \end{align*}
 
-\paragraph{} Given $E_S$ is only held sealed, any entity providing a valid challenge is trusted and considered part of the \textsc{Citadel} TCB. The challenger's PID is stored to detect any adversarial replay messages. RSA is only used for this initial exchange; it would be too slow to use for all messages. Thus the AES key provided in the response forms the basis of all future communication.
+\paragraph{} Given $E_S$ is only held sealed, any entity providing a valid challenge is trusted and considered part of the \textsc{Citadel} TCB. The challenger's PID is stored to detect any adversarial replay messages. RSA is only used for this initial exchange; it would be too slow to use for all messages. Thus the AES key provided in the response underlies all future communication.
 
-\paragraph{} \textsc{Citadel} uses AES to protect sensitive messages as every SGX-capable processor supports \textit{AESNI}~\cite{aesni} to accelerate AES in hardware. SGX provides this natively inside enclaves, and the official \textit{Intel AESNI} driver is included in the mainline kernel. \textit{AESNI} provides an encryption bandwidth of over 1 Gbps,\footnote{Our experiments exceed this, however this value is fair given the plethora of processors supporting SGX.} far exceeding the capacity required, and thus adding negligible overhead. The system's AES key updates with every message sent from the enclave using an SGX-approved source of entropy;\footnote{$new \leftarrow old \oplus update$} this adds minimal overhead and constitutes good practice. A copy of the first key presented in the challenge-response is retained and used in cases when a static key is essential.
+\paragraph{} \textsc{Citadel} uses AES for protection as all SGX-capable processors supports \textit{AESNI};~\cite{aesni} this provides hardware-accelerated AES operations to achieve an encryption bandwidth over 1 Gbps, far exceeding the capacity required, so adds negligible overhead. The system's AES key updates with every message sent from the enclave using an SGX-approved source of entropy;\footnote{$new \leftarrow old \oplus update$} this adds minimal overhead and constitutes good practice. A copy of the first key presented in the challenge-response is retained and used in cases when a static key is essential.
 
 \subsection{\texttt{libcitadel}}
 \label{sec:libcitadel}
-\paragraph{} \textsc{Citadel} provides a userspace auxiliary library to make integrating existing programs as effortless as possible. For each mediated \textit{syscall} (e.g. \texttt{open()}), it provides a proxy function (\texttt{c\_open()}): this would, in a future iteration of this design, be integrated directly into \texttt{libc}, but currently requires no major changes to applications' workflows. A good example of this in action is the ported version of \textit{Nginx} (§~\ref{sec:nginx-benchmarks}).
+\paragraph{} \textsc{Citadel} provides a userspace auxiliary library to make integrating existing programs easy and unobtrustive. For each mediated \textit{syscall} (e.g. \texttt{open()}) it provides a proxy function (\texttt{c\_open()}), thus requiring no major changes to applications' workflows.\footnote{Future work would integrate this directly into \texttt{libc}.} A good example of this in action is the ported version of \textit{Nginx} (§~\ref{sec:nginx-benchmarks}).
 
 \paragraph{} \texttt{libcitadel} performs two main functions;
 \begin{enumerate}
@@ -334,11 +334,11 @@ citadel_response_t asm_handle_request (pid_t pid,
     \item Tracking and predicting what permissions it believes the process has.
 \end{enumerate}
 
-\paragraph{} Communication is facilitated via the UNIX domain socket provided by \texttt{citadeld}. A zero-copy approach\footnote{Of course excluding copying in the kernel and when transferring the request into the enclave.} is used to minimise latency on both sides; this is optimised for in the protocol design, and the cost of communication minimised. Each communicant verifies the PID of the other party, as detailed in §~\ref{sec:ptokens}.
+\paragraph{} Communication is facilitated via \texttt{citadeld}'s domain socket. A zero-copy approach\footnote{Excluding copying in the kernel and transferring the request into the enclave.} helps minimise latency on both sides; this is optimised for in the protocol design. Each communicant verifies the PID of the other party (§~\ref{sec:ptokens}).
 
-\paragraph{} Caching at this level has a tremendous impact on overall performance. When reading a large file, for example, a program may make thousands of calls to \texttt{c\_read()} --- making external calls to \texttt{citadeld} would be wasteful as processes usually have enough information to infer their current position.
+\paragraph{} Caching at this level has a tremendous impact on overall performance. When reading a large file a program may make thousands of calls to \texttt{c\_read()} --- always calling to \texttt{citadeld} would be wasteful, as processes usually have enough information to infer their current position.
 
-\paragraph{} Therefore every process  maintains a list of \textit{expectations} --- the reservations it believes it has, including their validity --- and inferred taint status. They cannot exactly know their true values, especially as the policy enclave may grant different permissions than asked for, but in \textit{Nginx} over 97\% of requests were servable locally in a realistic workload. Using the same workflow, untainted processes speculatively execute operations, again removing the need to involve \texttt{citadeld}. The performance gain of requests served from the cache reduces the overhead from $\mathcal{O}(10\mu s)$ to $\mathcal{O}(100ns)$.
+\paragraph{} Therefore every process  maintains a list of \textit{expectations} --- the reservations it believes it has, including their validity --- and inferred taint status. They cannot precisely know the true values, especially as the policy enclave may grant different permissions than asked for, but in \textit{Nginx} over 97\% of requests were servable locally in a realistic workload. Using the same workflow, untainted processes speculatively execute operations, again removing the need to involve \texttt{citadeld}. The performance gain of requests served from the cache reduces the overhead from $\mathcal{O}(10\mu s)$ to $\mathcal{O}(100ns)$.
 
 
 \begin{listing}
@@ -375,14 +375,14 @@ int c_open(const char *pathname, int oflag, mode_t mode) {
 \label{lst:c_open}
 \end{listing}
 
-\paragraph{} A core challenge of the cache is relating open file descriptors to the permissions they require. This requires some manual work, including fetching its \textit{xattr} tag with \texttt{fgetxattr()} and estimating the expiration time of the LSM's underlying reservation. Ideally \texttt{libcitadel} requests revalidation just before expiry to ensure no unexpected drop-in service; this is particularly important for applications unaware of \textsc{Citadel}.
+\paragraph{} A core challenge of the cache is relating open file descriptors to the permissions they require. This involves manual work, including fetching its \textit{xattr} tag with \texttt{fgetxattr()} and estimating the expiration time of the LSM's underlying reservation. \texttt{libcitadel} attempts to revalidate tickets before expiry to avoid unexpected drops in service; this is particularly important for applications unaware of \textsc{Citadel}.
 
-\paragraph{} Special care has to be taken when handling child processes. As already discussed, children are given a copy of their parent process's state --- this includes its \texttt{libcitadel} cache. Although the LSM does not pass any reservations on to the child, \texttt{libcitadel} maintains the same \textit{expectation} cache. Entries in it are marked as invalid, to force the child to revalidate a file descriptor before first use. Additionally, we assume that a process trusts the initialisation code of its child, enabling \texttt{libcitadel} to delete the parent's \textit{ptoken} (§~\ref{sec:ptokens}); the \texttt{c\_fork()} function handles this automatically.
+\paragraph{} Special care is required with child processes. Children are given a copy of their parent process's state, including its \texttt{libcitadel} cache. Although the LSM passes no reservations to the child, \texttt{libcitadel} maintains the same \textit{expectation} cache. Entries in it are marked as invalid, to force the child to revalidate a file descriptor before first use. Additionally, we assume that a process trusts the initialisation code of its child, enabling \texttt{libcitadel} to delete the parent's \textit{ptoken} (§~\ref{sec:ptokens}); the \texttt{c\_fork()} function handles this automatically.
 
 
 \subsection{Additional Security Features}
 \label{sec:additional-security}
-\paragraph{} \textsc{Citadel} implements additional security mechanisms to reinforce potentially vulnerable aspects of the system. Both the policy enclave and LSM use a process's PID as its primary identifier --- \textsc{Citadel} implements two schemes to protect this notion of identity and help prove it.
+\paragraph{} \textsc{Citadel} implements additional security mechanisms to reinforce potentially vulnerable aspects of the system. Both the policy enclave and LSM use a process's PID as its primary identifier --- \textsc{Citadel} implements two schemes to protect and prove identity.
 
 \subsubsection{\textit{ptokens}}
 \label{sec:ptokens}
@@ -397,8 +397,9 @@ int c_open(const char *pathname, int oflag, mode_t mode) {
     \textit{ptoken} \rightarrow ( \text{citadel\_pid}, \text{identifier}, \text{token}, \{\text{identifier}, \text{token}, \text{pid}\}_K) \label{eqn:ptoken}
 \end{align}
 
-\paragraph{} Whenever a process connects to the \texttt{citadeld} socket, its identity is retrieved from the underlying transport mechanism. At both the sender and receiver the identity of the other is verified using this method, and additionally \texttt{libcitadel} expects the decrypted \textit{token}, a randomly generated byte-array, to be returned by \texttt{citadeld}, inspiring confidence that the response has not been forged.
+\paragraph{} Whenever a process connects to the \texttt{citadeld} socket, its identity is retrieved from the underlying transport mechanism (Listing~\ref{lst:socket-pid}). At both the sender and receiver the identity of the other is verified using this method, and additionally \texttt{libcitadel} expects the decrypted \textit{token} to be returned by \texttt{citadeld}, inspiring confidence that the response is legitimate.
 
+\begin{listing}
 \begin{minted}[fontsize=\small]{c}
 // Get PID of sender.
 struct ucred cred;
@@ -406,18 +407,24 @@ socklen_t len = sizeof(struct ucred);
 getsockopt(socket, SOL_SOCKET, SO_PEERCRED, (void*)&cred, &len);
 uint64_t pid = cred.pid;
 \end{minted}
+\vspace{3mm}
+\caption{PID retrieval from an active domain socket.}
+\label{lst:socket-pid}
+\end{listing}
 
 \subsubsection{PID Protection}
 \label{sec:pid-protection}
-\paragraph{} The LSM also implements a mechanism to detect PID forgery, as it is theoretically possible for a process to modify its PID with the help of a malicious kernel module (Appendix~\ref{appendix:pid-tampering}). This, if unchecked, would be detrimental for the LSM's integrity, allowing a process to silently assume another's identity. To this end, the LSM stores a process's PID within its security structure and routinely checks to ensure it does not change unexpectedly.\footnote{A valid change would be on \texttt{fork()}, in which case the stored PID should equal the parent process's.} Any process deemed to have an illegitimate PID is denied access to all entities, effectively killing it.
+\paragraph{} The LSM also watches for PID forgery, as it is possible for PIDs to be modified with the help of a malicious kernel module (Appendix~\ref{appendix:pid-tampering}). This would be detrimental for the LSM's integrity, allowing a process to silently assume another's identity. Therefore the LSM stores a process's PID within its security structure and routinely checks to ensure it does not change unexpectedly.\footnote{A valid change would be on \texttt{fork()}, in which case the stored PID should equal the parent process's.} Any process deemed to have an illegitimate PID is denied access to all entities, effectively killing it.
 
 \subsection{\textsc{Citadel} Build System}
 \label{sec:build-system}
-\paragraph{} Building \textsc{Citadel} requires both the kernel and policy enclave to be in agreement about the RSA keys to be used; without this building will fail. This is achieved using a preparatory script that does the following;\footnote{The script assumes a valid kernel with the \textsc{Citadel} LSM installed is present.}
+\paragraph{} Building \textsc{Citadel} requires both the kernel and policy enclave to be in agreement about the RSA keys to be used; without this building will fail. A preparatory script achieves this by;
 
 \begin{enumerate}
-    \item Generate two \textit{OpenSSL}\footnote{\url{https://www.openssl.org/}} 2048-bit RSA keys in \textit{DER} format --- the kernel's \textit{Crypto API} requires keys to present themselves as \textit{ASN.1 structures}.\footnote{\url{https://tls.mbed.org/kb/cryptography/asn1-key-structures-in-der-and-pem}}
-    \item Compile and launch \textsc{Citadel}'s \textit{preparatory enclave}; this must be signed with the same \textit{signing identity} as any policy enclaves generated. This ingests the two keys and generates a sealed keyset to be presented to initialising enclaves.
-    \item An interface file (\texttt{keys.h}) is then generated in the kernel's source directory --- this file contains the kernel's keypair, the enclave's public key, and the aforementioned sealed keyset. The key files are now deleted.
-    \item The policy enclaves are then built and signed. The kernel may now be compiled.
+    \item Downloading the kernel's source and inserting the \textsc{Citadel} LSM.
+    \item Generating two \textit{OpenSSL}\footnote{\url{https://www.openssl.org/}} 2048-bit RSA keys in \textit{DER} format --- the kernel's \textit{Crypto API} requires keys to present themselves as \textit{ASN.1 structures}.\footnote{\url{https://tls.mbed.org/kb/cryptography/asn1-key-structures-in-der-and-pem}}
+    \item Compiling and launching \textsc{Citadel}'s \textit{preparatory enclave}, signed with the same \textit{signing identity} as any policy enclaves generated. This ingests the two keys and generates a sealed keyset to be presented to initialising enclaves.
+    \item Generating an interface file (\texttt{keys.h}) in the kernel's source directory --- this file contains the kernel's keypair, the enclave's public key, and the aforementioned sealed keyset. The key files are deleted.
+    \item Building and signing the poicy enclaves.
+    \item The kernel may now be compiled.
 \end{enumerate}
