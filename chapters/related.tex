@@ -3,7 +3,7 @@
 
 \section{\textit{Flume} and \textit{CamFlow}}
 
-\paragraph{} Both \textit{Flume}~\cite{flume} and \textit{CamFlow}~\cite{camflow} present practical \acrshort{difc} systems for generic, OS-level protection in Linux. Their models are not dissimilar, with \textit{CamFlow} refining the basic \textit{Flume} approach. A detailed overview of the \textit{CamFlow} model has already been presented in §~\ref{sec:ifc}, but there are important differences in the implementation of the two works.
+\paragraph{} Both \textit{Flume}~\cite{flume} and \textit{CamFlow}~\cite{camflow} present practical \acrshort{difc} systems for generic, \acrshort{os}-level protection in Linux. Their models are not dissimilar, with \textit{CamFlow} refining the basic \textit{Flume} approach. A detailed overview of the \textit{CamFlow} model has already been presented in §~\ref{sec:ifc}, but there are important differences in the implementation of the two works.
 
 \paragraph{Flume} \textit{Flume} takes the form of a userspace reference monitor. Processes confined by Flume are not able to perform most \textit{syscalls} directly --- an \textit{interposition layer} replaces \textit{syscalls} with \acrfull{ipc} to the reference monitor, which enforces \acrshort{ifc} policies and ensuring operation safety on processes' behalf. The majority of complexity lies in the reference monitor, with its \acrshort{lsm} only a small auxiliary companion. The authors report a $30-40$\% overhead.
 

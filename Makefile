@@ -2,6 +2,7 @@ LATEX=pdflatex --interaction=batchmode --shell-escape
 BIBTEX=bibtex
 DVIPS=dvips
 PS2PDF=ps2pdf
+GLOSS=makeglossaries
 
 all: dissertation.pdf
 
@@ -18,6 +19,7 @@ all: dissertation.pdf
 dissertation.pdf: dissertation.tex titlepage.tex declaration.tex abstract.tex
 	$(LATEX) dissertation
 #       $(BIBTEX) dissertation
+	$(GLOSS) dissertation
 	$(LATEX) dissertation
 	$(LATEX) dissertation
 

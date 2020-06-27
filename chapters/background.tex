@@ -11,7 +11,7 @@
 
 \paragraph{} Formally, \acrshort{ifc} defines and enforces a non-interference policy between abstract \textit{security contexts}. A simple example is the distinction between \textit{unclassified} and \textit{classified} data --- here, information is only allowed to flow \textit{up}, ensuring that an \textit{unclassified} entity does not learn anything marked as \textit{classified}.~\cite{Bell1973SecureCS} This relationship can generally be represented as a partial ordering over \textit{security contexts}, formulated as a lattice.~\cite{ifc-lattice}
 
-\paragraph{} However, practical systems often require dataflow adhering to a more complicated policy set --- for example, supporting \textit{declassification}.~\cite{10.5555/794199.795122} Work undertaken by Pasquier et al.,~\cite{camflow} the core influence of the \acrshort{ifc} model developed in this project, constructs a pliable and efficient \textit{decentralised IFC} (\acrshort{difc}) model suitable for provenance enforcement and auditing in the Linux kernel.
+\paragraph{} However, practical systems often require dataflow adhering to a more complicated policy set --- for example, supporting \textit{declassification}.~\cite{10.5555/794199.795122} Work undertaken by Pasquier et al.,~\cite{camflow} the core influence of the \acrshort{ifc} model developed in this project, constructs a pliable and efficient \textit{decentralised \acrshort{ifc}} (\acrshort{difc}) model suitable for provenance enforcement and auditing in the Linux kernel.
 
 \subsection{Motivation, History, and \textit{Decentralised IFC}}
 
@@ -288,7 +288,7 @@ instructions can be separated into two distinct groups; privileged and unprivile
 
 \paragraph{} Linux's \acrshort{ima} subsystem is responsible for calculating the hashes of files and programs as they are loaded (\textit{measurement}), verifying them against an allowed list if required (\textit{appraisal}). Its driving purpose is to detect if files have been maliciously altered remotely or locally; the file's hash is stored as an \textit{\acrshort{xattr}} (\texttt{security.ima}). \acrshort{ima} supports many use cases, the majority of which are complementary to the \acrshort{lsm} framework, but we shall focus on one here --- \acrshort{evm}.
 
-\paragraph{} The Linux \textit{\acrfull{evm}} protects \textit{xattrs} in the \texttt{security} namespace --- this covers both the \acrshort{ima} hash and any labels created by security modules. Two tamper-detection methods are provided:
+\paragraph{} The Linux \textit{\acrfull{evm}} protects \textit{\acrshort{xattr}s} in the \texttt{security} namespace --- this covers both the \acrshort{ima} hash and any labels created by security modules. Two tamper-detection methods are provided:
 
 \begin{enumerate}
     \item The \textit{HMAC-SHA1} hash of the \texttt{security} namespace is stored as \texttt{security.evm} for reference, and
