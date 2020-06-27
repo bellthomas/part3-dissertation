@@ -1,6 +1,6 @@
 
 
-\paragraph{} In this chapter we shall introduce and detail a prototype implementation of a modular, SGX-protected \textit{reference monitor} --- \textsc{Citadel}. We start by considering this project's motivation and discussing the challenges faced. Then, we explain the three-part architecture, relating design decisions to its DIFC model. We discuss the architecture's performance and effectiveness in §~\ref{sec:eval}.
+\paragraph{} In this chapter we shall introduce and detail a prototype implementation of a modular, \acrshort{sgx}-protected \textit{reference monitor} --- \textsc{Citadel}. We start by considering this project's motivation and discussing the challenges faced. Then, we explain the three-part architecture, relating design decisions to its \acrshort{difc} model. We discuss the architecture's performance and effectiveness in §~\ref{sec:eval}.
 
 \section{Motivation}
 \paragraph{} Since its introduction in Anderson's 1972 report,~\cite{reference-monitor} the reference monitor concept has proved a reliable workhorse for many security models. It does not refer to any exact policy, nor limit itself to any particular implementation --- its abstractness is one of its greatest strengths, reserving any judgement about what policy is \textit{appropriate} in a particular setting.~\cite{irvine-rm}
@@ -9,16 +9,16 @@
 
 \begin{itemize}
     \item \textit{Always invoked.} To guarantee that adversaries are unable to bypass the system's security policies, every access to the system must be mediated
-    \item \textit{Evaluable.} It ``must be small enough to be subject to analysis and tests, the completeness of which can be assured'';~\cite{reference-monitor} to be trustworthy, it must be \textit{auditable}, with, ideally, a restricted TCB.
+    \item \textit{Evaluable.} It ``must be small enough to be subject to analysis and tests, the completeness of which can be assured'';~\cite{reference-monitor} to be trustworthy, it must be \textit{auditable}, with, ideally, a restricted \acrshort{tcb}.
     \item \textit{Tamper proof.} To ensure that an attacker cannot disable the authorisation mechanisms mandated by the security policy, the integrity of a reference monitor cannot be in question.
 \end{itemize}
 
-\paragraph{} No computer system is ever completely secure, and Linux is no exception. Having grown by 1.7 million lines of code (LoC) in the past year alone, to 27.8 million LoC in total,\footnote{\url{https://www.theregister.com/2020/01/06/linux\_2020\_kernel\_systemd\_code/}} bugs are inevitable --- almost 2000 have been reported in the past year,\footnote{\url{https://bugzilla.kernel.org/}} and 662 \textit{severe} bugs are still outstanding.\footnote{\url{https://www.cvedetails.com/product/47/Linux-Linux-Kernel.html}} Therefore we must question whether Linux alone can provide a reference monitor implementation the guarantees it requires,~\cite{Lipp2018MeltdownRK, 10.5555/2831143.2831164} thus motivating the use of SGX.
+\paragraph{} No computer system is ever completely secure, and Linux is no exception. Having grown by 1.7 million lines of code (\acrshort{loc}) in the past year alone, to 27.8 million \acrshort{loc} in total,\footnote{\url{https://www.theregister.com/2020/01/06/linux\_2020\_kernel\_systemd\_code/}} bugs are inevitable --- almost 2000 have been reported in the past year,\footnote{\url{https://bugzilla.kernel.org/}} and 662 \textit{severe} bugs are still outstanding.\footnote{\url{https://www.cvedetails.com/product/47/Linux-Linux-Kernel.html}} Therefore we must question whether Linux alone can provide a reference monitor implementation the guarantees it requires,~\cite{Lipp2018MeltdownRK, 10.5555/2831143.2831164} thus motivating the use of \acrshort{sgx}.
 
-\paragraph{} Applying SGX to this problem brings two attractive benefits;
+\paragraph{} Applying \acrshort{sgx} to this problem brings two attractive benefits;
 \begin{itemize}
-    \item The system's IFC policy can be evaluated both during offline analysis and online using \textit{attestation}, building other enclaves' confidence in the underlying system.
-    \item SGX's hardware protections are very capable of defending a reference monitor's state, even if adversaries have ring-0 privileges or in the presence of a kernel bug.
+    \item The system's \acrshort{ifc} policy can be evaluated both during offline analysis and online using \textit{attestation}, building other enclaves' confidence in the underlying system.
+    \item \acrshort{sgx}'s hardware protections are very capable of defending a reference monitor's state, even if adversaries have ring-0 privileges or in the presence of a kernel bug.
 \end{itemize}
 
 \section{Challenges}
@@ -32,17 +32,17 @@
     \label{fig:sgx-abstract-integration}
 \end{figure}
 
-\paragraph{} The natural location for a reference monitor is embedded directly into the kernel, in the path of \textit{syscalls'} control flows. \textit{CamFlow} does this using the LSM framework, silently tagging processes and other entities as they are encountered by the kernel, and additionally providing an external LSM-interface for any active changes. However, an SGX enclave is incompatible with this workflow (§~\ref{sec:sgx-no-kernel-mode}) as it cannot execute alongside kernel code. Thus a significant, unavoidable design feature is that the reference monitor must be distributed across rings 0 and 3 --- an enclave \textit{policy} component, and an LSM for \textit{enforcement}.
+\paragraph{} The natural location for a reference monitor is embedded directly into the kernel, in the path of \textit{syscalls'} control flows. \textit{CamFlow} does this using the \acrshort{lsm} framework, silently tagging processes and other entities as they are encountered by the kernel, and additionally providing an external \acrshort{lsm}-interface for any active changes. However, an \acrshort{sgx} enclave is incompatible with this workflow (§~\ref{sec:sgx-no-kernel-mode}) as it cannot execute alongside kernel code. Thus a significant, unavoidable design feature is that the reference monitor must be distributed across rings 0 and 3 --- an enclave \textit{policy} component, and an \acrshort{lsm} for \textit{enforcement}.
 
-\paragraph{} The disruption this change causes could severely impact performance; Figure~\ref{fig:sgx-abstract-integration} highlights the significant change to overall control flow. Most notably, externalising part of the LSM to an enclave forces, in the worst case, an additional pair of context switches for each \textit{syscall}.
+\paragraph{} The disruption this change causes could severely impact performance; Figure~\ref{fig:sgx-abstract-integration} highlights the significant change to overall control flow. Most notably, externalising part of the \acrshort{lsm} to an enclave forces, in the worst case, an additional pair of context switches for each \textit{syscall}.
 
 \paragraph{} Given a ring-3 component is unavoidable, we seek to minimise the overhead caused by its integration, while maintaining \textit{safety} (every operation must be mediated). This situation is reminiscent of \textit{exokernels};~\cite{10.1145/224056.224076} forcing a portion of the system into userspace could, if treated carefully, help overall performance.~\cite{10.1145/269005.266644} 
 
 \paragraph{} Two architectures, as illustrated in Figure~\ref{fig:sgx-integration}, were initially considered. 
 
 \begin{enumerate}
-    \item An \textit{isolated} extension of the LSM. Only the security implementation communicates with the \textit{policy} enclave, acting as a na\"{i}ve reimplementation of a fully self-contained LSM, and using an additional kernel module as an I/O relay.
-    \item An \textit{integrated} userspace service, through which permission is \textit{requested} ahead of time and decisions stored in the LSM until needed. Backflow of information is facilitated asynchronously, but no additional kernel relay is required.
+    \item An \textit{isolated} extension of the \acrshort{lsm}. Only the security implementation communicates with the \textit{policy} enclave, acting as a na\"{i}ve reimplementation of a fully self-contained \acrshort{lsm}, and using an additional kernel module as an \acrshort{io} relay.
+    \item An \textit{integrated} userspace service, through which permission is \textit{requested} ahead of time and decisions stored in the \acrshort{lsm} until needed. Backflow of information is facilitated asynchronously, but no additional kernel relay is required.
 \end{enumerate}
 
 
@@ -56,7 +56,7 @@
     \vspace{5mm}
 \end{figure}
 
-\paragraph{}\textit{Architecture 1} can be implemented without changing the IFC model presented in §~\ref{sec:ifc-modelling}, reducing concerns regarding correctness and safety. However it adds significant overhead to the critical sections~\cite{Dubois1988SynchronizationCA} of core LSM functions, in most cases while the kernel holds locks for various objects being accessed.
+\paragraph{}\textit{Architecture 1} can be implemented without changing the \acrshort{ifc} model presented in §~\ref{sec:ifc-modelling}, reducing concerns regarding correctness and safety. However it adds significant overhead to the critical sections~\cite{Dubois1988SynchronizationCA} of core \acrshort{lsm} functions, in most cases while the kernel holds locks for various objects being accessed.
 
 \paragraph{} \textit{Architecture 2} is more flexible, requiring all negotiation be conducted ahead of time, and importantly, without leaving userspace: any overhead only impacts the application, leaving the kernel's critical sections to execute with minimal interference. A notable downside, however, is that the system's security model will need an extension because \textit{policy decisions and enforcement are no longer one and the same}.
 

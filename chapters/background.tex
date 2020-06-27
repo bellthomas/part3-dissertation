@@ -286,7 +286,7 @@ instructions can be separated into two distinct groups; privileged and unprivile
 \subsubsection{Integrity Measurement Architecture}
 \label{sec:ima}
 
-\paragraph{} Linux's \acrshort{ima} subsystem is responsible for calculating the hashes of files and programs as they are loaded (\textit{measurement}), verifying them against an allowed list if required (\textit{appraisal}). Its driving purpose is to detect if files have been maliciously altered remotely or locally; the file's hash is stored as an \textit{xattr} (\texttt{security.ima}). \acrshort{ima} supports many use cases, the majority of which are complementary to the \acrshort{lsm} framework, but we shall focus on one here --- \acrshort{evm}.
+\paragraph{} Linux's \acrshort{ima} subsystem is responsible for calculating the hashes of files and programs as they are loaded (\textit{measurement}), verifying them against an allowed list if required (\textit{appraisal}). Its driving purpose is to detect if files have been maliciously altered remotely or locally; the file's hash is stored as an \textit{\acrshort{xattr}} (\texttt{security.ima}). \acrshort{ima} supports many use cases, the majority of which are complementary to the \acrshort{lsm} framework, but we shall focus on one here --- \acrshort{evm}.
 
 \paragraph{} The Linux \textit{\acrfull{evm}} protects \textit{xattrs} in the \texttt{security} namespace --- this covers both the \acrshort{ima} hash and any labels created by security modules. Two tamper-detection methods are provided:
 
