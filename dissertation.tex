@@ -55,13 +55,10 @@
 \usepackage[mathscr]{euscript}
 \usepackage[toc,acronym,savewrites,seeautonumberlist,xindy]{glossaries}
 
-\newglossarystyle{mystyle}{%
-  \glossarystyle{long}%
-  \renewenvironment{theglossary}%
-     {\begin{longtable}{p{3cm}p{\glsdescwidth}}}%
-     {\end{longtable}}%
-}
-
+\def\table{\def\figurename{Table}\figure}
+\let\endtable\endfigure
+\def\listing{\def\figurename{Listing}\figure}
+\let\endlisting\endfigure
 
 \renewcommand*{\backref}[1]{}
 \renewcommand*{\backrefalt}[4]{%
@@ -108,10 +105,10 @@
 \setcounter{page}{0}
 \pagestyle{plain}
 \tableofcontents
+\renewcommand{\listfigurename}{Figures, Tables, and Listings}
 \addcontentsline{toc}{section}{\listfigurename}
 \listoffigures
-\addcontentsline{toc}{section}{\listtablename}
-\listoftables
+
 
 \onehalfspacing
 
