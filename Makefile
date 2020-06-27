@@ -25,7 +25,7 @@ dissertation.pdf: dissertation.tex titlepage.tex declaration.tex abstract.tex
 
 clean:
 	$(RM) -f dissertation.pdf dissertation.ps dissertation.dvi 
-	$(RM) -f *.log *.aux *.toc *.bbl *.lot *.lof *.fls *.fdb_latexmk *.synctex.gz
+	$(RM) -f *.log *.aux *.toc *.bbl *.lot *.lof *.fls *.fdb_latexmk *.synctex.gz *.acn *.acr *.alg *.bcf *.blg *.brf *.glsdefs *.ist *.out *.run.xml *.xdy
 
 count:
 	@texcount -1 -utf8 -sum -inc dissertation.tex
