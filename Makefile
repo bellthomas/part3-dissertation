@@ -33,5 +33,9 @@ count:
 count-all:
 	@texcount -utf8 -sum -inc dissertation.tex
 
+count-alt:
+	@echo "Including title page, declaration, and TOC:"
+	@detex dissertation.tex | wc -w | tr -d ' '
+
 upload:
 	scp dissertation.pdf ahb36@ely.cl.cam.ac.uk:~/public_html
