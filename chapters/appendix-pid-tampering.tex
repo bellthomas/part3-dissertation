@@ -1,0 +1,48 @@
+\begin{listing}[h]
+    \begin{minted}[fontsize=\small]{c}
+    static void* retrieve_symbol(const char *sym) { 
+       static unsigned long faddr = 0;  
+    
+       // Compare kernel symbol with query.
+       int symcmp(void* data, const char* sym, struct module* mod, 
+                  unsigned long addr) { 
+          if(!strcmp((char*)data, sym)) { 
+             faddr = addr; 
+             return 1; 
+          } 
+          else return 0; 
+       }; 
+    
+       kallsyms_on_each_symbol(symcmp, (void*)sym); 
+       return (void*)faddr; 
+    } 
+    
+    \end{minted}
+    \caption{Expose unexported symbols from the global namespace using \texttt{kallsyms}.}
+    \end{listing}
+    
+    \begin{listing}[h]
+    \begin{minted}[fontsize=\small]{c}
+    static asmlinkage void (*_change_pid)
+          (struct task_struct *task, enum pid_type type, struct pid *pid);
+    static asmlinkage struct pid* (*_alloc_pid)(struct pid_namespace *ns);
+    
+    static ssize_t change_pid(void)
+    {
+        struct pid* newpid = _alloc_pid(task_active_pid_ns(current));
+        _change_pid(current, PIDTYPE_PID, newpid);
+        /* current->pid has changed. */
+    }
+    
+    static int __init module_init(void)
+    {
+        _change_pid = retrieve_symbol("change_pid");
+        _alloc_pid = retrieve_symbol("alloc_pid");
+        /* ... */
+        /* On SysFS call execute change_pid(void) */
+        return 0;
+    }
+    
+    \end{minted}
+    \caption{Exploit unexported symbols to change the PID of the current process.}
+    \end{listing}

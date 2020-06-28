@@ -83,14 +83,11 @@
   }}%
 }
 
-% Glossary
 \input{glossary}
 
-%% START OF DOCUMENT
+
 \begin{document}
 
-
-%% FRONTMATTER (TITLE PAGE, DECLARATION, ABSTRACT, ETC) 
 \pagestyle{empty}
 \singlespacing
 \newgeometry{margin=1.4in}
@@ -111,14 +108,11 @@
 
 
 \onehalfspacing
+\raggedbottom
 
 %TC:endignore
-
 %TC:group table 1 1
 %TC:group tabular 1 1
-
-%% START OF MAIN TEXT 
-\raggedbottom
 
 \chapter{Introduction}
 \pagenumbering{arabic} 
@@ -152,58 +146,8 @@
 
 \chapter{PID Tampering: Proof of Concept}
 \label{appendix:pid-tampering}
+\input{chapters/appendix-pid-tampering}
 
-\begin{listing}[h]
-\begin{minted}[fontsize=\small]{c}
-static void* retrieve_symbol(const char *sym) { 
-   static unsigned long faddr = 0;  
-
-   // Compare kernel symbol with query.
-   int symcmp(void* data, const char* sym, struct module* mod, 
-              unsigned long addr) { 
-      if(!strcmp((char*)data, sym)) { 
-         faddr = addr; 
-         return 1; 
-      } 
-      else return 0; 
-   }; 
-
-   kallsyms_on_each_symbol(symcmp, (void*)sym); 
-   return (void*)faddr; 
-} 
-
-
-static asmlinkage void (*_change_pid)
-      (struct task_struct *task, enum pid_type type, struct pid *pid);
-static asmlinkage struct pid* (*_alloc_pid)(struct pid_namespace *ns);
-
-static ssize_t change_pid(void)
-{
-    struct pid* newpid = _alloc_pid(task_active_pid_ns(current));
-    _change_pid(current, PIDTYPE_PID, newpid);
-    /* current->pid has changed. */
-}
-
-static int __init module_init(void)
-{
-    _change_pid = retrieve_symbol("change_pid");
-    _alloc_pid = retrieve_symbol("alloc_pid");
-    /* ... */
-    /* On SysFS call execute change_pid(void) */
-    return 0;
-}
-
-\end{minted}
-\caption{Outline for a proof of concept kernel module to change a process's \acrshort{pid}.}
-\end{listing}
-
-% The \Gls{latex} typesetting markup language is specially suitable 
-% for documents that include \gls{maths}. \Glspl{formula} are 
-% rendered properly an easily once one gets used to the commands.
-
-% Given a set of numbers, there are elementary methods to compute 
-% its \acrlong{gcd}, which is abbreviated \acrshort{gcd}. This 
-% process is similar to that used for the \acrfull{lcm}.
 
 
 \clearpage
