@@ -34,7 +34,7 @@ count-all:
 	@texcount -utf8 -sum -inc dissertation.tex
 
 count-alt:
-	@echo "Including title page, declaration, and TOC:"
+	@echo "Including title page, abstract, declaration, and TOC (~470 words):"
 	@detex dissertation.tex | wc -w | tr -d ' '
 
 upload:
