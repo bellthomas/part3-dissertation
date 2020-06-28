@@ -3,14 +3,17 @@
 \vspace{24pt} 
 
 
-\paragraph{} A
+\paragraph{} Information Flow Control (IFC) is powerful tool for protecting data in a computer system, enforcing not only who it may be accessed by, but also the manner in which it can be used throughout its lifespan. Intel's Software Guard Extension (SGX) affords complementary protection, providing a general purpose trusted execution environment for applications and their data. To date, no work has been conducted considering the overlap between the two, and how they may mutually reinforce each other.
 
-\begin{itemize}
-    \item \textsc{Citadel} ---  a modular, enclave-backed reference monitor to securely and verifiably implement IFC methods in the Linux kernel.
-    \item Implemented using enclaves, an LSM, and an auxiliary library for unobstrusive application integration.
-    \item Real-world performance overhead of $20-25\%$ observed using \textsc{Nginx} and microbenchmarks.
-    \item Demonstrates potential viability of a symbiotic enclave-kernel relationship for security implementations.
-\end{itemize}
+\paragraph{} This dissertation presents \textsc{Citadel}, a modular, SGX-backed reference monitor to securely and verifiably implement IFC methods in the Linux kernel. Its prototype externalises policy decisions from its enforcement security module, providing a userspace promise-of-access model with asynchronous fulfillment. By aliasing system calls, the system may transparently integrate with unmodified applications and support security context inference at the client to amortise the performance cost of integration. 
+
+\paragraph{} Observed results are promising, demonstrating a worst-case median performance overhead of $25\%$. In addition, the \textsc{Nginx} webserver is demonstrated running under \textsc{Citadel}; high bandwidth transfers exhibit near parity with the native Linux kernel's performance. This work lends credence to the potential viability of a symbiotic enclave-kernel relationship for security implementations, something that may, in the long run, benefit both.
+
+
+%     \item Implemented using enclaves, an LSM, and an auxiliary library for unobstrusive application integration.
+%     \item Real-world performance overhead of $20-25\%$ observed using \textsc{Nginx} and microbenchmarks.
+%     \item Demonstrates potential viability of a symbiotic enclave-kernel relationship for security implementations.
+% \end{itemize}
 
 
 \newpage
