@@ -213,7 +213,7 @@
 
 
 \subsubsection{Permissions} 
-\paragraph{} Tainted processes must hold a valid reservation to perform any operation allowing data to flow to another entity (Appendix X) --- enforcement strictly follows the rules in §~\ref{sec:permissible-operations}. Untainted processes bypass all checks, and thus lie outside the \acrshort{ifc} model; security implications are discussed in §~\ref{sec:ifc-model-implications}
+\paragraph{} Tainted processes must hold a valid reservation to perform any operation allowing data to flow to another entity --- enforcement strictly follows the rules in §~\ref{sec:permissible-operations}. Untainted processes bypass all checks, and thus lie outside the \acrshort{ifc} model; security implications are discussed in §~\ref{sec:ifc-model-implications}
 
 
 \subsubsection{Reservation Cache} 
@@ -269,7 +269,7 @@ citadel_response_t asm_handle_request (pid_t pid,
 
 \paragraph{} This can be considered to determine the validity of an operation, $A \xrightharpoonup{\;\omega\;} t$, based on its knowledge of any implicated flows ($A \rightarrow *$).
 
-\paragraph{Operations} Entity operations, $\Omega$, are presented as \texttt{citadel\_operation\_t}, a simple bit mask over the operations \textsc{Citadel} recognises (Appendix X). Similarly, policy decisions are represented using \texttt{citadel\_response\_t}; these may be \textit{approved}, \textit{rejected}, \textit{error}, \textit{invalid}, \textit{granted},\footnote{Approved, and confirming that the process is recognised as the owner of the entity.} and \textit{forged}.\footnote{See §~\ref{sec:additional-security}.}
+\paragraph{Operations} Entity operations, $\Omega$, are presented as \texttt{citadel\_operation\_t}, a simple bit mask over the operations \textsc{Citadel} recognises. Similarly, policy decisions are represented using \texttt{citadel\_response\_t}; these may be \textit{approved}, \textit{rejected}, \textit{error}, \textit{invalid}, \textit{granted},\footnote{Approved, and confirming that the process is recognised as the owner of the entity.} and \textit{forged}.\footnote{See §~\ref{sec:additional-security}.}
 
 
 \subsubsection{Host Application}

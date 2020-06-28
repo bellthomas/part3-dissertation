@@ -22,6 +22,8 @@
 \def\authoremail{Alexander.Bell-Thomas@cl.cam.ac.uk}
 \def\dissertationtitle{Trusted Reference Monitors for Linux using Intel SGX Enclaves}
 
+\newif\ifblind
+\blindfalse
 
 
 %\usepackage[dvips]{epsfig,graphics} 
@@ -44,7 +46,8 @@
   booktabs,
   array,
   makecell,
-  caption
+  caption,
+  pdfpages
 }
 \usepackage[backref=page]{hyperref}
 \usepackage[tt=false]{libertine}
@@ -91,10 +94,17 @@
 \pagestyle{empty}
 \singlespacing
 \newgeometry{margin=1.4in}
-\input{titlepage}
-\restoregeometry
-\onehalfspacing
-\input{declaration}
+
+\ifblind
+  \includepdf[pages=-]{blind-cover.pdf}
+  \cleardoublepage
+\else 
+  \input{titlepage}
+  \restoregeometry
+  \onehalfspacing
+  \input{declaration}
+\fi 
+
 \singlespacing
 \input{abstract}
 
