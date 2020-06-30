@@ -11,7 +11,7 @@
     \item Real-world \textsc{Nginx} performance benchmarks for both low-latency and high-bandwidth configurations. (§~\ref{sec:nginx-benchmarks})
 \end{enumerate}
 
-\paragraph{} The following results are best compared to \textit{Flume}~\cite{flume} --- \textit{CamFlow}, although implemented similarly, has a different scope that this project. \textit{Flume} reports $\sim 40\%$ decrease in real-world performance; we report $\sim 25\%$ (§~\ref{sec:nginx-benchmarks}).
+\paragraph{} The following results are best compared to \textit{Flume}~\cite{flume} --- \textit{CamFlow}, although implemented similarly, has a different scope that this project. \textit{Flume} reports a $40\%$ decrease in real-world performance; we report $\sim 25\%$ (§~\ref{sec:nginx-benchmarks}).
 
 \subsection{Evaluation Environment}
 \paragraph{} The research machine used for evaluation contained a quad-core Intel® Core™ i5-6600 (supporting \acrshort{sgx} v1), 16 GiB RAM, and a 1-Gbps \acrshort{nic}. The primary disk provided 389 MBps read and 210 MBps write.\footnote{Reported by the \texttt{dd} tool.} For all experiments running under \textsc{Citadel}, \texttt{citadeld} was running via \texttt{systemd} --- all debugging tools were disabled and the enclave was built in hardware pre-release mode with the \textit{transition\_using\_threads} optimisaton.~\cite{sgx-switchless} Linux v5.6.0 was used as the base kernel.
@@ -109,7 +109,7 @@
 \subsection{IPC Microbenchmarks}
 \label{sec:ipc-microbenchmarks}
 
-\paragraph{} Again using the modified Watson benchmark, we investigated \textsc{Citadel}'s effect on end-to-end \acrshort{ipc} performance. We investigate \textit{pipes}, \textit{local sockets} (\texttt{socketpair()}), and \textit{regular sockets}, between 2 threads (Figure~\ref{fig:ipc-2thread-graph}) and between a parent and child process (Figure~\ref{fig:ipc-2proc-graph}).
+\paragraph{} Again using the modified Watson benchmark, we investigated \textsc{Citadel}'s effect on end-to-end \acrshort{ipc} performance. We investigate \textit{pipes}, \textit{local sockets},\footnote{\texttt{socketpair()}} and \textit{regular sockets}, between 2 threads (Figure~\ref{fig:ipc-2thread-graph}) and between a parent and child process (Figure~\ref{fig:ipc-2proc-graph}).
 
 \paragraph{} Overall, the results between the two contexts are similar --- both see approximately 20\% degradation in the worst cases, tending towards equal performance when using $\sim 10^5$-byte blocks. At first glance it appears that \textsc{Citadel} affects the performance between 2 threads slightly more than 2 processes, but in fact \textsc{Citadel} performs near-identically in both. Native performance is more heavily optimised when sending between two threads; \textsc{Citadel} overshadows any latency gained by the kernel.
 
@@ -119,7 +119,8 @@
     \centering
     \includegraphics[width=\linewidth]{figures/graphs/ipc-2thread.pdf}
     \vspace{-5mm}
-    \caption[Effective bandwidths for various types of IPC between \textit{2 threads}.]{Effective bandwidths for various types of \acrshort{ipc} between \textit{2 threads}, $n=200$.}
+    \captionsetup{justification=centering}
+    \caption[Effective bandwidths for various types of IPC between \textit{2 threads}.]{Effective bandwidths for various types of \acrshort{ipc} \\ between \textit{2 threads}, $n=200$.}
     \label{fig:ipc-2thread-graph}
 \end{figure}
 
@@ -128,7 +129,8 @@
     \centering
     \includegraphics[width=\linewidth]{figures/graphs/ipc-2proc.pdf}
     \vspace{-5mm}
-    \caption[Effective bandwidths for various types of IPC between \textit{2 processes}.]{Effective bandwidths for various types of \acrshort{ipc} between \textit{2 processes}, $n=200$.}
+    \captionsetup{justification=centering}
+    \caption[Effective bandwidths for various types of IPC between \textit{2 processes}.]{Effective bandwidths for various types of \acrshort{ipc} \\ between \textit{2 processes}, $n=200$.}
     \label{fig:ipc-2proc-graph}
 \end{figure}
 
@@ -214,7 +216,7 @@
 
 \paragraph{} Secondly, can the kernel actually be held to the same integrity level as an enclave? How trustable is a system that enclaves can only attest to half of?
 
-\paragraph{} Enclaves are unique in that their online attestation process inspires absolute trust, but offline provenance can be equally valuable. Although not \acrshort{sgx}-based, \textit{\acrshort{uefi} Secure Boot}~\cite{Richardson2013UefiSB} is an industry-standard mechanism for verifying whether an \acrshort{os} is legitimate. Ensuring that a \textsc{Citadel} system's installation is trustworthy by having it properly signed by a trusted party defends against many types of attack. Assuming that an \acrshort{os} installation is verified, trust in \textsc{Citadel} revolves around the policy enclave ---  if it believes the system is legitimate then other enclaves may too. It alone has the power to decide permissions, meaning its endorsement of its own \acrshort{tcb} should carry weight. This, however, is undermined when running on a hypervisor, as the \acrshort{lsm}'s integrity may be compromised.
+\paragraph{} Enclaves are unique in that their online attestation process inspires absolute trust, but offline provenance can be equally valuable. Although not \acrshort{sgx}-based, \textit{\acrshort{uefi} Secure Boot}~\cite{Richardson2013UefiSB} is an industry-standard mechanism for verifying whether an \acrshort{os} is legitimate. Ensuring that a \textsc{Citadel} system's installation is trustworthy by having it properly signed by a trusted party defends against many types of attack, and using \acrshort{ima} (§~\ref{sec:ima}) strengths it further. Assuming that an \acrshort{os} installation is verified, trust in \textsc{Citadel} revolves around the policy enclave ---  if it believes the system is legitimate then other enclaves may too. It alone has the power to decide permissions, meaning its endorsement of its own \acrshort{tcb} should carry weight. This, however, is undermined when running on a hypervisor, as the \acrshort{lsm}'s integrity may be compromised.
 
 % \paragraph{} One example that \textsc{Citadel} cannot defend against has a malicious superuser compiling a new kernel with a modified \acrshort{lsm}, using valid keys scraped from the Linux system binary, and booting into it to bypass \textsc{Citadel}'s protections. Although not a bespoke solution, verifying an \acrshort{os} is well-explored and thus not a direct concern for this work. Additional protections include Linux's \textit{\acrlong{ima}} (§~\ref{sec:ima}).
 
@@ -242,7 +244,7 @@
 
 \subsection{SGX Vulnerabilities}
 \label{sec:sgx-vulnerabilities}
-\paragraph{} This work assume that the \acrshort{sgx} platform is itself secure; a successful attack on \acrshort{sgx} obviously compromises any protection offered by \textsc{Citadel}. A number of \acrshort{sgx} vulnerabilities have been detailed;~\cite{lipp2018meltdown, vanbulck2018foreshadow, Schwarz2019ZombieLoad, ridl, vanbulck2020lvi} these are effective and highly concerning, but mitigating them is not within this project's scope
+\paragraph{} This work assume that the \acrshort{sgx} platform is itself secure; a successful attack on \acrshort{sgx} obviously compromises any protection offered by \textsc{Citadel}. A number of \acrshort{sgx} vulnerabilities have been detailed;~\cite{lipp2018meltdown, vanbulck2018foreshadow, Schwarz2019ZombieLoad, ridl, vanbulck2020lvi} these are effective and highly concerning, but mitigating them is not within this project's scope.
 
 \section{Use Cases}
 

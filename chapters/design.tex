@@ -10,7 +10,7 @@
 \begin{itemize}
     \item \textit{Always invoked.} To guarantee that adversaries are unable to bypass the system's security policies, every access to the system must be mediated
     \item \textit{Evaluable.} It ``must be small enough to be subject to analysis and tests, the completeness of which can be assured'';~\cite{reference-monitor} to be trustworthy, it must be \textit{auditable}, with, ideally, a restricted \acrshort{tcb}.
-    \item \textit{Tamper proof.} To ensure that an attacker cannot disable the authorisation mechanisms mandated by the security policy, the integrity of a reference monitor cannot be in question.
+    \item \textit{Tamper proof.} The integrity of a reference monitor, which presides over the system's authorisation mechanisms, cannot be in question.
 \end{itemize}
 
 \paragraph{} No computer system is ever completely secure, and Linux is no exception. Having grown by 1.7 million lines of code (\acrshort{loc}) in the past year alone, to 27.8 million \acrshort{loc} in total,\footnote{\url{https://www.theregister.com/2020/01/06/linux\_2020\_kernel\_systemd\_code/}} bugs are inevitable --- almost 2000 have been reported in the past year,\footnote{\url{https://bugzilla.kernel.org/}} and 662 \textit{severe} bugs are still outstanding.\footnote{\url{https://www.cvedetails.com/product/47/Linux-Linux-Kernel.html}} Therefore we must question whether Linux alone can provide a reference monitor implementation the guarantees it requires,~\cite{Lipp2018MeltdownRK, 10.5555/2831143.2831164} thus motivating the use of \acrshort{sgx}.
@@ -20,6 +20,7 @@
     \item The system's \acrshort{ifc} policy can be evaluated both during offline analysis and online using \textit{attestation}, building other enclaves' confidence in the underlying system.
     \item \acrshort{sgx}'s hardware protections are very capable of defending a reference monitor's state, even if adversaries have ring-0 privileges or in the presence of a kernel bug.
 \end{itemize}
+
 
 \section{Challenges}
 \label{sec:challenges}
@@ -68,7 +69,7 @@
 
 
 % ---------------
-
+\clearpage
 \section{The \textsc{Citadel} IFC Model}
 
 \paragraph{} Before work on the final \textsc{Citadel} implementation began, we constructed a formalisation describing the distributed nature of its design. A model helps reason about the safety and correctness of the final system, and provides the notation to properly discuss its features. Our model directly extends the one presented in §~\ref{sec:ifc-modelling}.
@@ -298,6 +299,7 @@ citadel_response_t asm_handle_request (pid_t pid,
 \begin{enumerate}
     \item \textsc{Applications $\longleftrightarrow$ Policy Enclave}. \\
     All application requests (via \texttt{libcitadel}, §~\ref{sec:libcitadel}) are sent to the policy enclave using a standard domain socket; \texttt{/run/citadel.socket}. To ensure that all processes can communicate with the reference monitor, a special tag, $\tau = 2^{128} -1$, is assigned, asserting the reference monitor's ownership of it and whitelisting it in the \acrshort{lsm}.
+    \vspace{5mm} % TODO hack
     \item \textsc{Policy Enclave $\longleftrightarrow$ \acrshort{lsm}}. \\
     Communication uses two mediums; \textit{SecurityFS} and \textit{\acrshort{xattr}s}. All messages are encrypted using \acrshort{aes}-256-\acrshort{gcm}~\cite{Rijndael,McGrew2005TheGM}; the key is chosen during initialisation (§~\ref{sec:initialisation}). \\
     Reservations are installed using a custom \textit{SecurityFS} interface\footnote{\texttt{/sys/kernel/security/citadel/update}} and synchronously inserted into the reservation cache. The policy enclave may invoke an operation directly on a file using \texttt{setxattr()}, which the LSM intercepts, triggering it to enact the required changes. One common use of this is entity tagging.
@@ -317,7 +319,7 @@ citadel_response_t asm_handle_request (pid_t pid,
 \vspace{-5mm}
 \begin{align*}
     \text{\acrshort{lsm}} \rightarrow \text{Enclave} &: \{\textit{challenge}\}_{E_{P}} \\
-    \text{Enclave} \rightarrow \text{\acrshort{lsm}} &: \{\textit{challenge}, \textit{\acrshort{pid}}, \textit{identifier}, \textit{aes\_key}, ...\}_{E_{S}}
+    \text{Enclave} \rightarrow \text{\acrshort{lsm}} &: \{\textit{challenge}, \textit{\acrshort{pid}}, \textit{identifier}, \textit{aes\_key}, ...\}_{K_{P}}
 \end{align*}
 
 \paragraph{} Given $E_S$ is only held sealed, any entity providing a valid challenge is trusted and considered part of the \textsc{Citadel} \acrshort{tcb}. The challenger's \acrshort{pid} is stored to detect any adversarial replay messages. \acrshort{rsa} is only used for this initial exchange; it would be too slow to use for all messages. Thus the \acrshort{aes} key provided in the response underlies all future communication.
@@ -326,9 +328,7 @@ citadel_response_t asm_handle_request (pid_t pid,
 
 \subsection{\texttt{libcitadel}}
 \label{sec:libcitadel}
-\paragraph{} \textsc{Citadel} provides a userspace auxiliary library to make integrating existing programs easy and unobtrustive. For each mediated \textit{syscall} (e.g. \texttt{open()}) it provides a proxy function (\texttt{c\_open()}), thus requiring no major changes to applications' workflows.\footnote{Future work would integrate this directly into \texttt{libc}.} A good example of this in action is the ported version of \textit{Nginx} (§~\ref{sec:nginx-benchmarks}).
-
-\paragraph{} \texttt{libcitadel} performs two main functions;
+\paragraph{} \textsc{Citadel} provides a userspace auxiliary library to make integrating existing programs easy and unobtrustive. For each mediated \textit{syscall} (e.g. \texttt{open()}) it provides a proxy function (\texttt{c\_open()}), thus requiring no major changes to applications' workflows.\footnote{Future work would integrate this directly into \texttt{libc}.} A good example of this in action is the ported version of \textit{Nginx} (§~\ref{sec:nginx-benchmarks}). \texttt{libcitadel} performs two main functions;
 \begin{enumerate}
     \item Communication with the policy enclave.
     \item Tracking and predicting what permissions it believes the process has.

@@ -26,7 +26,7 @@
 
 \paragraph{} A \acrshort{difc} system relies on \textit{tags} and \textit{labels} to annotate the entities it tracks. Let $\mathcal{T}$ be a large set of opaque tokens, or \textit{tags}. Tags are themselves meaningless, but used as an abstract identifier for an entity's \textit{security context}. A \textit{label}, $l \subseteq \mathcal{T}$, is a collection of tags that are concretely attached to assets, such as files; these form a lattice under the subset-relation partial order. For each process $a$ there are two labels, one for secrecy, $a_s$, and one for integrity, $a_i$. For a tag $t$, $t \in a_s$ implies, conservatively, that process $a$ has seen information associated with tag $t$. Likewise, $t \in a_i$ indicates that every input to $a$ has been endorsed for an integrity level marked with $t$.
 
-\paragraph{Walkthrough --- Secrecy Enforcement} In a typical environment, a user can only convince themselves that a text editor is safe to use if they, or someone they trust, audits the program's source code. With \acrshort{difc}, however, it is possible to reason that if the system can provide the following four guarantees, it cannot leak sensitive data without the user's permission.
+\paragraph{Walkthrough --- Secrecy Enforcement} In a typical environment, a user can only convince themselves that a text editor is safe to use if they, or someone they trust, audits the program's source code. Using \acrshort{difc}, however, one can reason that a system cannot leak data without permission if the following holds;
 
 \begin{enumerate}
     \item If a process $a$ read a file with a secrecy tag $t$, then $t \in a_s$.
@@ -35,7 +35,7 @@
     \item $t \in a_s$ restricts $a$'s access to an uncontrolled medium, such as a network.
 \end{enumerate}
 
-\paragraph{} The heart of an \acrshort{ifc} implementation is its \textit{reference monitor}, which tracks the labelling for each process, granting or rejecting permission before an operation is executed by the \acrshort{os}. Contrasting solutions handle this process differently: \textit{Flume},~\cite{flume} implements a full system interposition layer, forcing all \textit{syscalls} to pass through its userspace \textit{reference monitor} before reaching the \acrshort{os}, whereas \textit{CamFlow}~\cite{camflow} embeds its \textit{reference monitor} in the kernel itself. In all schemes, however, this trusted component is responsible for both policy and enforcement. This project focusses on this implementation.
+\paragraph{} The heart of an \acrshort{ifc} implementation is its \textit{reference monitor}, which tracks the labelling for each process, granting or rejecting permission before an operation is executed by the \acrshort{os}. Contrasting solutions handle this process differently --- \textit{Flume},~\cite{flume} implements a full system interposition layer, forcing all \textit{syscalls} to pass through its userspace \textit{reference monitor} before reaching the \acrshort{os}, whereas \textit{CamFlow}~\cite{camflow} embeds its \textit{reference monitor} in the kernel itself. In all schemes, however, this trusted component is responsible for both policy and enforcement. This project focusses on this implementation.
 
 
 \subsection{Modelling}
@@ -72,10 +72,13 @@
 \begin{equation}
     A \rightarrow B \iff A_s \preceq B_s \;\; \land \;\; B_i \preceq A_i \tag{$\alpha$}
 \end{equation}
+\vspace{-12mm}
+
 \paragraph{} Information produced within a \textit{security context} may only flow within the same context or a related \textit{subcontext}.
 
 \paragraph{Entity Creation} ($\beta$) shows correct initialisation of a new object's \textit{security context}. Logically it must be held at the same level as the environment creating it. For example, when a process creates a new file, this must subject to the same tainting as the original process.
 
+\vspace{-5mm}
 \begin{equation}
     A \Rightarrow B \implies A_s = B_s \;\; \land \;\; A_i = B_i \tag{$\beta$}
 \end{equation}
@@ -88,6 +91,8 @@
 \end{itemize}
 
 \paragraph{} \textit{Active} entities may modify their labelling iff they have the capability to add or remove specific tags. The set $A_{s}^{+} \subseteq \mathcal{T}$ lists all the tags that entity $A$ may add to its security labelling, while $A_{s}^{-} \subseteq \mathcal{T}$ holds all the tags $A$ may remove from its labelling. These sets are modified either during creation or in receipt of a delegated capability from a peer. The sets $A_{i}^{\pm} \subseteq \mathcal{T}$ also exist, performing the same function for integrity labels. ($\gamma$) formalised this process.
+
+
 \begin{equation}
     \left\{\begin{array}{lr}
         A'_x \leftarrow A_x \cup \{t\} & \text{if} \;\; t \in A_{x}^{+} \\
@@ -166,7 +171,7 @@
 \end{itemize}
 
 \subsubsection{Third-party enclaves}
-\paragraph{} Enclaves are always accompanied by a host application which acts as its untrusted counterpart. The host application calls the \acrshort{sgx} \acrshort{sdk} to build an enclave on its behalf using an enclave image, packaged as a standard shared library (\texttt{enclave.so}) and returns its \textit{global identifier}. Control is passed from the host application to the enclave by invoking an enclave function via an \textit{ECALL}. Execution flow can temporarily leave the enclave if it calls one of the host application's functions via an \textit{OCALL}. Execution naturally leaves enclave-mode when an \textit{ECALL} terminates. Both \textit{ECALLs} and \textit{OCALLs} are defined statically in the enclave's interface definition (\texttt{enclave.edl}), and the necessary glue code is generated by the \acrshort{sgx} \acrshort{sdk}'s build toolchain at compile time; this ensures calls crossing the enclave boundary are marshalled safely and correctly.
+\paragraph{} Enclaves are always accompanied by a host application which acts as its untrusted counterpart. The host application calls the \acrshort{sgx} \acrshort{sdk} to build an enclave on its behalf using an enclave image, packaged as a standard shared library and returns its \textit{global identifier}. Control is passed from the host application to the enclave by invoking an enclave function via an \textit{ECALL}. Execution flow can temporarily leave the enclave if it calls one of the host application's functions via an \textit{OCALL}. Execution naturally leaves enclave-mode when an \textit{ECALL} terminates. Both \textit{ECALLs} and \textit{OCALLs} are defined statically in the enclave's interface definition (\texttt{enclave.edl}), and the necessary glue code is generated by the \acrshort{sgx} \acrshort{sdk}'s build toolchain at compile time; this ensures calls crossing the enclave boundary are marshalled safely and correctly.
 
 
 \subsection{Enclave Lifecycle}
@@ -252,7 +257,7 @@ instructions can be separated into two distinct groups; privileged and unprivile
 
 \section{Aspects of the \textit{Linux} Kernel}
 
-\paragraph{} Linux needs little introduction. Created in 1991 as an open-source alternative to UNIX, it now powers over 90\% of \textit{the cloud} and 85\% of smartphones. With almost 25,000 contributors to the kernel, it is immensely complex, with numerous interlocking parts. This section provides a brief overview of a small subset of them to support the information given in §~\ref{sec:design}.
+\paragraph{} Linux needs little introduction. Created in 1991 as an open-source alternative to UNIX, it now powers over 90\% of \textit{the cloud} and 85\% of smartphones. With almost 25,000 contributors to the kernel, it is immensely complex, with numerous interlocking parts. This section provides a brief overview of a small subset of them to support the design presented in §~\ref{sec:design}.
 
 \subsection{Virtual File System}
 
@@ -271,7 +276,7 @@ instructions can be separated into two distinct groups; privileged and unprivile
 \paragraph{} Files can have additional, external, key-value pairs attached to them. These attributes, shortened to \textit{\acrshort{xattr}s}, are permanent and saved to disk alongside the file's content. Values must be in the form of a null-terminated string, however they are optional and may be left empty if the attribute is just a flag. \textit{\acrshort{xattr}s} are namespaced to define different classes of functionality; the \texttt{user} namespace is open to all (e.g. \texttt{user.example\_attribute}), but \texttt{trusted}, \texttt{system}, and \texttt{security} are reserved for specific uses by the kernel --- the \texttt{security} namespace belongs exclusively to \acrshort{lsm}s (§~\ref{sec:lsm}).
 
 \subsubsection{\textit{sysfs}}
-\paragraph{} \textit{sysfs} is a pseudo-filesystem provided by the \acrshort{vfs}, that the kernel uses to export its subsystems via a virtual file interface (\texttt{/sys}). Specific instantiations of \textit{sysfs} are used for various purposes --- for example, \acrshort{lsm}s and \textit{SecurityFS} (\texttt{/sys/kernel/security}).
+\paragraph{} \textit{sysfs} is a pseudo-filesystem provided by the \acrshort{vfs}, that the kernel uses to export its subsystems via a virtual file interface.\footnote{\texttt{/sys}} Specific instantiations of \textit{sysfs} are used for various purposes --- for example, \acrshort{lsm}s and \textit{SecurityFS}.\footnote{\texttt{/sys/kernel/security}}
 
 
 
@@ -291,6 +296,6 @@ instructions can be separated into two distinct groups; privileged and unprivile
 \paragraph{} The Linux \textit{\acrfull{evm}} protects \textit{\acrshort{xattr}s} in the \texttt{security} namespace --- this covers both the \acrshort{ima} hash and any labels created by security modules. Two tamper-detection methods are provided:
 
 \begin{enumerate}
-    \item The \textit{HMAC-SHA1} hash of the \texttt{security} namespace is stored as \texttt{security.evm} for reference, and
+    \item The \textit{HMAC-SHA1} hash of the \texttt{security} namespace is stored, for reference, as \texttt{security.evm}, and
     \item A digital signature of this value is stored alongside using a key that is sealed either using a \textit{Trusted Platform Module}~\cite{tpm} or passphrase.
 \end{enumerate}
