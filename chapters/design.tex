@@ -1,6 +1,6 @@
 
 
-\paragraph{} In this chapter we shall introduce and detail a prototype implementation of a modular, \acrshort{sgx}-protected \textit{reference monitor} --- \textsc{Citadel}. We start by considering this project's motivation and discussing the challenges faced. Then, we explain the three-part architecture, relating design decisions to its \acrshort{difc} model. We discuss the architecture's performance and effectiveness in §~\ref{sec:eval}.
+\paragraph{} In this chapter we introduce a prototype implementation of a modular, \acrshort{sgx}-protected \textit{reference monitor} --- \textsc{Citadel}. We start by considering this project's motivation and discussing the challenges faced. Then, we explain the three-part architecture, relating design decisions to its \acrshort{difc} model. We discuss the architecture's performance and effectiveness in §~\ref{sec:eval}.
 
 \section{Motivation}
 \paragraph{} Since its introduction in Anderson's 1972 report,~\cite{reference-monitor} the reference monitor concept has proved a reliable workhorse for many security models. It does not refer to any exact policy, nor limit itself to any particular implementation --- its abstractness is one of its greatest strengths, reserving any judgement about what policy is \textit{appropriate} in a particular setting.~\cite{irvine-rm}
@@ -43,7 +43,7 @@
 
 \begin{enumerate}
     \item An \textit{isolated} extension of the \acrshort{lsm}. Only the security implementation communicates with the \textit{policy} enclave, acting as a na\"{i}ve reimplementation of a fully self-contained \acrshort{lsm}, and using an additional kernel module as an \acrshort{io} relay.
-    \item An \textit{integrated} userspace service, through which permission is \textit{requested} ahead of time and decisions stored in the \acrshort{lsm} until needed. Backflow of information is facilitated asynchronously, but no additional kernel relay is required.
+    \item An \textit{integrated} userspace service, through which permission is requested ahead of time and decisions stored in the \acrshort{lsm} until needed. Backflow of information is facilitated asynchronously, but no additional kernel relay is required.
 \end{enumerate}
 
 
@@ -61,7 +61,7 @@
 
 \paragraph{} \textit{Architecture 2} is more flexible, requiring all negotiation be conducted ahead of time, and importantly, without leaving userspace: any overhead only impacts the application, leaving the kernel's critical sections to execute with minimal interference. A notable downside, however, is that the system's security model will need an extension because \textit{policy decisions and enforcement are no longer one and the same}.
 
-\paragraph{} Preliminary experiments showed that performance of the two architectures was similar in light workloads, but that \textit{Architecture 1} degrades significantly due to resource contention. Additionally, as will be explained in §~\ref{sec:citadel-tcb}, the dependence on a kernel module conflicts with the desired constrained \acrshort{tcb} of the system. For these reasons \textit{Architecture 2} forms the basis of the prototype.
+\paragraph{} Preliminary experiments showed that the performances of the two architectures were similar in light workloads, but that \textit{Architecture 1} degrades significantly with resource contention. Additionally, as will be explained in §~\ref{sec:citadel-tcb}, the dependence on a kernel module conflicts with the desired constrained \acrshort{tcb} of the system. For these reasons \textit{Architecture 2} forms the basis of the prototype.
 
 \paragraph{} An additional challenge is one of incomplete information --- an enclave is not privy to internal kernel datastructures such as \texttt{task\_struct}, which will store the taint and capabilities of processes. A potential solution would be a request-response model via a custom kernel interface for any queries, though the performance impact would be severe, requiring additional context switches. Instead, the approach adopted creates an abstract interface that purposefully removes the minutiae of the underlying system. Any solution must be trustworthy and safe, and malicious entities must not be able to exploit any \textit{eventually consistent} components.~\cite{10.1145/1435417.1435432}
 
@@ -91,14 +91,14 @@
 \paragraph{} Let $\Omega$ be the set of all operations mediated by the reference monitor, for example, \texttt{file\_read} or \texttt{socket\_open}, and $\mathcal{R}$, the set of all \textit{reservations}, as follows.\footnote{Recalling that $\mathcal{T}$ is the set of all tags.}
 
 \newcommand{\powerset}{\raisebox{.15\baselineskip}{\Large\ensuremath{\wp}}}
-\vspace{-5mm}
+\vspace{-3mm}
 \begin{equation*}
     \mathcal{R} = \mathcal{T} \times \powerset(\Omega)
     \vspace{2mm}
 \end{equation*}
 
 \paragraph{} Further, we define a shorthand, $t^{\alpha}$;
-\vspace{-3mm}
+% \vspace{-3mm}
 \begin{equation*}
     r \in \mathcal{R} \;.\; (r = (t, \alpha) = t^{\alpha} \implies t \in \mathcal{T} \; \wedge \; \alpha \subseteq \Omega)
 \end{equation*}
@@ -248,7 +248,7 @@
 \paragraph{} \texttt{citadeld} represents the policy counterpart to the LSM's enforcement, including the core \acrshort{sgx} enclave. \texttt{citadeld} is modular, hosting an independent policy module sitting on top of an enforcement translation library (Figure~\ref{fig:policy-enclave}).
 
 \subsubsection{Abstract Policy Module}
-\paragraph{} The policy module is presented with a simple, event-driven interface; this streamlines their implementation, allowing more emphasis to be put on correctness. Their implementation is based around a single method, through which their permission is sought when required; \texttt{asm\_handle\_request(3)}.
+\paragraph{} The policy module is presented with a simple, event-driven interface, streamlining their implementation, and allowing more emphasis to be put on correctness. Their implementation is based around a single method, through which their permission is sought when required; \texttt{asm\_handle\_request(3)}.
 
 
 \paragraph{} The simplest possible policy is that any operation is permissible. The request parameter, amongst other things, holds the target identifier and set of operations. 
@@ -275,7 +275,7 @@ citadel_response_t asm_handle_request (pid_t pid,
 
 \subsubsection{Host Application}
 
-\paragraph{} There are several steps before presenting requests to the resident policy module (§~\ref{sec:interdomain-comms}). Requests often refer to absolute filepaths, requiring retrieval of their tags, if they exist --- security \textit{\acrshort{xattr}} serve these requests. Translation is performed pre-emptively depending on the operation requested, and results are cached in a \textit{translation cache} to minimise overhead. This is implemented using \textit{sparsehash},\footnote{\url{https://github.com/sparsehash/sparsehash}} and great care is taken to detect stale entities that may confuse the internal decision process.
+\paragraph{} There are several steps before presenting requests to the resident policy module (§~\ref{sec:interdomain-comms}). Requests often refer to absolute filepaths, requiring retrieval of their tags, if they exist --- security \textit{\acrshort{xattr}s} serve these requests. Translation is performed pre-emptively depending on the operation requested, and results are cached in a \textit{translation cache} to minimise overhead. This is implemented using \textit{sparsehash},\footnote{\url{https://github.com/sparsehash/sparsehash}} and great care is taken to detect stale entities that may confuse the internal decision process.
 
 
 \subsubsection{Enforcement Interface}
@@ -286,7 +286,7 @@ citadel_response_t asm_handle_request (pid_t pid,
 
 \subsubsection{Shared Memory}
 \label{sec:shm}
-\paragraph{} \textsc{Citadel} also supports the tagging and restriction of shared memory (\acrshort{shm}). This is managed directly using \textit{System V} identifiers granted to allocated memory segments instead of inodes. Internally, restrictions function as files do, but per-access mediation is not directly possible -- we can only detect when segments are allocated and attached. Thus this workflow requires special consideration, and a new reporting mechanism from the \acrshort{lsm} back to the policy enclave. Using a specialised \textit{\acrshort{xattr}} interface (\ref{eqn:shm-interface}) to drive a request-response model, the \acrshort{lsm} tracks and reports the \acrshort{pid}s of everything that has touched an \acrshort{shm} segment. 
+\paragraph{} \textsc{Citadel} also supports the tagging and restriction of shared memory (\acrshort{shm}). This is managed directly using \textit{System V} identifiers granted to allocated memory segments instead of inodes. Internally, restrictions function as files do, but per-access mediation is not directly possible -- we can only detect when segments are allocated and attached. Thus this workflow requires special consideration and a new reporting mechanism from the \acrshort{lsm} back to the policy enclave. Using a specialised \textit{\acrshort{xattr}} interface (\ref{eqn:shm-interface}) to drive a request-response model, the \acrshort{lsm} tracks and reports the \acrshort{pid}s of everything that has touched an \acrshort{shm} segment. 
 
 \vspace{-8mm}
 \begin{align}
@@ -312,9 +312,9 @@ citadel_response_t asm_handle_request (pid_t pid,
 \label{sec:initialisation}
 \paragraph{} Whenever the system boots, the \acrshort{lsm} is first to come online --- \texttt{citadeld} may start any time afterwards, meaning that the \acrshort{lsm} must be capable of operating independently. In this case the system will tend towards a state of complete lockdown (for tainted processes). Thus the mechanism by which the \acrshort{lsm} and policy enclave initialise communication is vital for secure operation; \textsc{Citadel} achieves this with a pair of 2048-bit \acrshort{rsa} keypairs, one for the enclave ($E_{P/S}$) and one for the kernel ($K_{P/S}$).
 
-\paragraph{} \acrshort{sgx} does not provide protection against reverse engineering, thus the enclave's keys must be provided as a sealed entity; sealing here uses \texttt{MRSIGNER}, allowing any policy enclave provided by the \textit{sealing authority} to fully function, and is compiled into the kernel, available via \textit{SecurityFS}.\footnote{\texttt{/sys/kernel/security/citadel/sealed\_keys}}
+\paragraph{} \acrshort{sgx} does not provide protection against reverse engineering, thus the enclave's keys must be provided as a sealed entity; sealing here uses \texttt{MRSIGNER}, allowing any policy enclave provided by the \textit{sealing authority} to fully function. Sealed keys are compiled into the kernel, available via \textit{SecurityFS}.\footnote{\texttt{/sys/kernel/security/citadel/sealed\_keys}}
 
-\paragraph{} Once a policy enclave has been initialised it must verify itself; the \acrshort{lsm} issues a random challenge\footnote{\texttt{/sys/kernel/security/citadel/challenge}} encrypted using the enclave's public key, and expects a reply using the corresponding private key.
+\paragraph{} Once a policy enclave has been initialised it must verify itself; the \acrshort{lsm} issues a random challenge\footnote{\texttt{/sys/kernel/security/citadel/challenge}} encrypted using the enclave's public key, and expects a reply containing the correct challege token.
 
 \vspace{-5mm}
 \begin{align*}
@@ -322,9 +322,9 @@ citadel_response_t asm_handle_request (pid_t pid,
     \text{Enclave} \rightarrow \text{\acrshort{lsm}} &: \{\textit{challenge}, \textit{\acrshort{pid}}, \textit{identifier}, \textit{aes\_key}, ...\}_{K_{P}}
 \end{align*}
 
-\paragraph{} Given $E_S$ is only held sealed, any entity providing a valid challenge is trusted and considered part of the \textsc{Citadel} \acrshort{tcb}. The challenger's \acrshort{pid} is stored to detect any adversarial replay messages. \acrshort{rsa} is only used for this initial exchange; it would be too slow to use for all messages. Thus the \acrshort{aes} key provided in the response underlies all future communication.
+\paragraph{} Given $E_S$ is only held sealed, any entity providing a valid challenge response is trusted and considered part of the \textsc{Citadel} \acrshort{tcb}. The challenger's \acrshort{pid} is stored to detect any adversarial replay messages. \acrshort{rsa} is only used for this initial exchange; it would be too slow to use for all messages. Thus the \acrshort{aes} key provided in the response underlies all future communication.
 
-\paragraph{} \textsc{Citadel} uses \acrshort{aes} for protection as all \acrshort{sgx}-capable processors supports \textit{\acrshort{aesni}};~\cite{aesni} this provides hardware-accelerated \acrshort{aes} operations to achieve an encryption bandwidth over 1 Gbps, far exceeding the capacity required, so adds negligible overhead. The system's \acrshort{aes} key updates with every message sent from the enclave using an \acrshort{sgx}-approved source of entropy;\footnote{$new \leftarrow old \oplus update$} this adds minimal overhead and constitutes good practice. A copy of the first key presented in the challenge-response is retained and used in cases when a static key is essential.
+\paragraph{} \textsc{Citadel} uses \textit{\acrshort{aesni}}~\cite{aesni} to provide \acrshort{aes} protection as all \acrshort{sgx}-capable processors support it. It provides hardware-accelerated \acrshort{aes} operations to achieve an encryption bandwidth over 1 Gbps, far exceeding the capacity required, thus adding negligible overhead. The system's \acrshort{aes} key updates with every message sent from the enclave using an \acrshort{sgx}-approved source of entropy;\footnote{$new \leftarrow old \oplus update$} this adds minimal overhead and constitutes good practice. A copy of the first key presented in the challenge-response is retained and used in cases when a static key is essential.
 
 \subsection{\texttt{libcitadel}}
 \label{sec:libcitadel}
@@ -414,17 +414,17 @@ uint64_t pid = cred.pid;
 
 \subsubsection{PID Protection}
 \label{sec:pid-protection}
-\paragraph{} The LSM also watches for \acrshort{pid} forgery, as it is possible for \acrshort{pid}s to be modified with the help of a malicious kernel module (Appendix~\ref{appendix:pid-tampering}). This would be detrimental for the \acrshort{lsm}'s integrity, allowing a process to silently assume another's identity. Therefore the \acrshort{lsm} stores a process's \acrshort{pid} within its security structure and routinely checks to ensure it does not change unexpectedly.\footnote{A valid change would be on \texttt{fork()}, in which case the stored \acrshort{pid} should equal the parent process's.} Any process deemed to have an illegitimate \acrshort{pid} is denied access to all entities, effectively killing it.
+\paragraph{} The LSM also watches for \acrshort{pid} forgery, as it is possible in certain scenarios for \acrshort{pid}s to be modified with the help of a malicious kernel module (Appendix~\ref{appendix:pid-tampering}). This would be detrimental for the \acrshort{lsm}'s integrity, allowing a process to silently assume another's identity. Therefore the \acrshort{lsm} stores a process's \acrshort{pid} within its security structure and routinely checks to ensure it does not change unexpectedly.\footnote{A valid change would be on \texttt{fork()}, in which case the stored \acrshort{pid} should equal the parent process's.} Any process deemed to have an illegitimate \acrshort{pid} is denied access to all entities, effectively killing it.
 
 \subsection{\textsc{Citadel} Build System}
 \label{sec:build-system}
-\paragraph{} Building \textsc{Citadel} requires both the kernel and policy enclave to be in agreement about the shared \acrshort{rsa} keys; without this compilation will fail. A preparatory script achieves this by;
+\paragraph{} Building \textsc{Citadel} requires both the kernel and policy enclave to be in agreement about the system's \textit{Sealing Authority}; without this operation will fail. A preparatory script achieves this by;
 
 \begin{enumerate}
     \item Downloading the kernel's source and inserting the \textsc{Citadel} \acrshort{lsm}.
     \item Generating two \textit{OpenSSL}\footnote{\url{https://www.openssl.org/}} 2048-bit \acrshort{rsa} keys in \textit{\acrshort{der}} format --- the kernel's \textit{Crypto \acrshort{api}} requires keys to present themselves as \textit{\acrshort{asn}.1 structures}.\footnote{\url{https://tls.mbed.org/kb/cryptography/asn1-key-structures-in-der-and-pem}}
     \item Compiling and launching \textsc{Citadel}'s \textit{preparatory enclave}, signed with the same \textit{signing identity} as any policy enclaves generated. This ingests the two keys and generates a sealed keyset to be presented to initialising enclaves.
     \item Generating an interface file (\texttt{keys.h}) in the kernel's source directory --- this file contains the kernel's keypair, the enclave's public key, and the aforementioned sealed keyset. The key files are deleted.
-    \item Building and signing the poicy enclaves.
+    \item Building and signing the policy enclaves.
     \item The kernel may now be compiled.
 \end{enumerate}

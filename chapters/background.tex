@@ -213,7 +213,7 @@ instructions can be separated into two distinct groups; privileged and unprivile
         \multirow{11}{*}{Ring 0} 
             & \tableTop{\texttt{ECREATE}} & \tableTop{Generate and copy the \textit{\acrshort{secs}} structure to a new page in the \textit{\acrshort{epc}}, initialising a new enclave.} \\ 
             & \texttt{EADD} & \tableMid{Add a new \textit{\acrshort{epc}} page for the current enclave; this is used to load initial code and data.} \\ 
-            & \texttt{EEXTEND} & \tableMid{Updates the enclave's measurement during attestation; modifies the \textit{\acrshort{secs}}.} \\ 
+            & \texttt{EEXTEND} & \tableMid{Update the enclave's measurement during attestation; modifies the \textit{\acrshort{secs}}.} \\ 
             & \texttt{EINIT} & \tableMid{The terminal instruction in an enclave's initialisation, finalising its attributes and measurement.} \\ 
             & \texttt{EREMOVE} & \tableMid{Permanently remove a page from the \textit{\acrshort{epc}}; usually invoked during enclave destruction.} \tableBottom \\ 
         \hline\hline
@@ -240,7 +240,7 @@ instructions can be separated into two distinct groups; privileged and unprivile
 
 \paragraph{} \texttt{MRSIGNER}, also known as the enclave's \textit{Sealing Identity}, is generated during the enclave build process --- all production enclaves need to be signed using an \acrshort{rsa} key provided by the compiling user (the \textit{Sealing Authority}). The public key from this pair is stored in \textit{SIGSTRUCT}, the \textit{Enclave Signature Structure}. During an enclave's launch its signed compile-time \texttt{MRENCLAVE} value (held in \textit{SIGSTRUCT}) is decrypted and crossreferenced with a freshly-computed runtime \texttt{MRENCLAVE} value to detect tampering. \texttt{MRSIGNER} is the same for all enclaves signed by the same \textit{Sealing Authority}.
 
-\paragraph{Local Attestation} Two enclaves resident on the same system are able to attest their identities to each other using their \texttt{MRENCLAVE} and \texttt{MRSIGNER} values; this usually precedes the establishment of a shared secret (using a variant of \textit{Diffie-Hellman} backed by the platform's master \acrshort{sgx} key) for confidential communication between them.
+\paragraph{Local Attestation} Two enclaves resident on the same system are able to attest their identities to each other using their \texttt{MRENCLAVE} and \texttt{MRSIGNER} values; this usually precedes the establishment of a shared secret (using a variant of \textit{Diffie-Hellman}~\cite{10.1109/TIT.1976.1055638} backed by the platform's master \acrshort{sgx} key) for confidential communication between them.
 
 \paragraph{Remote Attestation} The Intel specification also enables an enclave to attest its identity to a remote party. The system's \textit{Quoting Enclave} verifies an enclave's local \textit{quote} and creates a digital signature of it using the \acrshort{cpu}'s permanent hardware \acrshort{sgx} private key. Using an \textit{\acrfull{epid}}~\cite{epid} allows this process to complete anonymously, relying on information encoded in the \acrshort{cpu} during manufacturing. The \textit{Provisioning Enclave} assists in this process, especially as production enclaves are required to attest with Intel's provisioning service~\cite{sgx-prov-service} before executing. Remote attestation is not explicitly required in this project, hence will not be covered further.
 
@@ -267,7 +267,7 @@ instructions can be separated into two distinct groups; privileged and unprivile
 
 \paragraph{Inodes} The \textit{inode} data structure represents information about a single file existing on a file system. All objects, not only files, are \textit{backed} by inodes. No pathname is assigned at this level; this is provided at a higher level of abstraction. An inode does however indicate ownership, access restrictions and content type, and is identified by its \textit{inode number}.
 
-\paragraph{Dentries} Each item in the \textit{direct entry cache} (\textit{dcache}), shortened to \textit{dentry}, represents a connection between an inode its path in the \acrshort{vfs}. This glue layer is responsible for building the tangible folder structure, and as the name suggests, metadata caching. A \textit{file} consists of a \textit{dentry}-\textit{inode} pair.
+\paragraph{Dentries} Each item in the \textit{direct entry cache} (\textit{dcache}), shortened to \textit{dentry}, represents a connection between an inode and its path in the \acrshort{vfs}. This glue layer is responsible for building the tangible folder structure, and as the name suggests, metadata caching. A \textit{file} consists of a \textit{dentry}-\textit{inode} pair.
 
 \paragraph{File descriptors} Whenever a process opens a file, it is presented with a \textit{file descriptor} by the kernel. This structure is unique to a process, providing the gateway between the process and the underlying file it describes. All active descriptors can be viewed at \texttt{/proc/<pid>/fd/}; for standard processes \textit{0} globally refers to \textit{stdin}, \textit{1} to \textit{stdout}, and \textit{2} to \textit{stderr}. Reads and writes to a file (or socket, pipe, etc.) are performed on the relevant file descriptor, not the object directly.
 
