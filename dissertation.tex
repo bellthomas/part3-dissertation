@@ -8,7 +8,6 @@
 %%
 %%   SMH, May 2010. 
 
-\newcommand{\wordcount}{\input{|"make count"}}
 
 \documentclass[a4paper,12pt,twoside,openright]{report}
 %TC:ignore
@@ -35,7 +34,6 @@
   tabularx,
   setspace,
   xspace,
-  geometry,
   amssymb,
   mathtools,
   url,
@@ -49,6 +47,7 @@
   caption,
   pdfpages
 }
+\usepackage[hmargin=25mm,vmargin=25mm]{geometry}
 \usepackage[backref=page]{hyperref}
 \usepackage[tt=false]{libertine}
 \usepackage{multirow}
@@ -93,17 +92,7 @@
 
 \pagestyle{empty}
 \singlespacing
-\newgeometry{margin=1.4in}
-
-\ifblind
-  \includepdf[pages=-]{blind-cover.pdf}
-  \cleardoublepage
-\else 
-  \input{titlepage}
-  \restoregeometry
-  \onehalfspacing
-  \input{declaration}
-\fi 
+%\newgeometry{margin=30mm}
 
 \singlespacing
 \input{abstract}

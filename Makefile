@@ -27,15 +27,3 @@ clean:
 	$(RM) -f dissertation.pdf dissertation.ps dissertation.dvi 
 	$(RM) -f *.log *.aux *.toc *.bbl *.lot *.lof *.fls *.fdb_latexmk *.synctex.gz *.acn *.acr *.alg *.bcf *.blg *.brf *.glsdefs *.ist *.out *.run.xml *.xdy
 
-count:
-	@texcount -1 -utf8 -sum -inc dissertation.tex
-
-count-all:
-	@texcount -utf8 -sum -inc dissertation.tex
-
-count-alt:
-	@echo "Including title page, abstract, declaration, and TOC (~470 words):"
-	@detex dissertation.tex | wc -w | tr -d ' '
-
-upload:
-	scp dissertation.pdf ahb36@ely.cl.cam.ac.uk:~/public_html
