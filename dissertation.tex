@@ -48,7 +48,7 @@
   pdfpages
 }
 \usepackage[hmargin=30mm,vmargin=25mm]{geometry}
-\usepackage[backref=page]{hyperref}
+\usepackage[backref=page,pdfpagelabels=false,pdfborder={0 0 0}]{hyperref}
 \usepackage[tt=false]{libertine}
 \usepackage{multirow}
 \usepackage{minted}
@@ -89,16 +89,17 @@
 
 
 \begin{document}
+\setcounter{page}{3}
 
-\pagestyle{empty}
+%\pagestyle{empty}
 \singlespacing
 %\newgeometry{margin=30mm}
 
 \singlespacing
 \input{abstract}
 
-\pagenumbering{roman}
-\setcounter{page}{0}
+%\pagenumbering{roman}
+%\setcounter{page}{0}
 \pagestyle{plain}
 \tableofcontents
 \renewcommand{\listfigurename}{Figures, Tables, and Listings}
@@ -114,8 +115,8 @@
 %TC:group tabular 1 1
 
 \chapter{Introduction}
-\pagenumbering{arabic} 
-\setcounter{page}{1} 
+%\pagenumbering{arabic} 
+%\setcounter{page}{1} 
 \input{chapters/introduction}
 
 \chapter{Background} 
